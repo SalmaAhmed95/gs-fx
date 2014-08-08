@@ -1,0 +1,205 @@
+package org.graphstream.ui.javafx.util;
+
+import javafx.event.EventType;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+
+import javax.swing.JLabel;
+import java.awt.Component;
+
+
+/**
+ * common swing utilities
+ * <p>
+ * User: bowen
+ * Date: 8/3/14
+ */
+public class SwingUtils
+{
+    private static final Component empty = new JLabel();
+
+
+    public static java.awt.event.MouseEvent toAwt(final MouseEvent event)
+    {
+        final EventType type = event.getEventType();
+        if (null == type)
+        {
+            return null;
+        }
+
+        final int id;
+        if (MouseEvent.MOUSE_MOVED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_MOVED;
+        }
+        else if (MouseEvent.MOUSE_DRAGGED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_DRAGGED;
+        }
+        else if (MouseEvent.MOUSE_CLICKED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_CLICKED;
+        }
+        else if (MouseEvent.MOUSE_PRESSED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_PRESSED;
+        }
+        else if (MouseEvent.MOUSE_RELEASED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_RELEASED;
+        }
+        else if (MouseEvent.MOUSE_ENTERED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_ENTERED;
+        }
+        else if (MouseEvent.MOUSE_EXITED.equals(type))
+        {
+            id = java.awt.event.MouseEvent.MOUSE_EXITED;
+        }
+        else
+        {
+            return null;
+        }
+
+        final long when = System.currentTimeMillis();
+        final int modifiers = modifiers(event);
+        final int x = (int) event.getX();
+        final int y = (int) event.getY();
+        final int count = event.getClickCount();
+        final boolean popup = event.isPopupTrigger();
+        return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, count, popup);
+    }
+
+
+    public static java.awt.event.KeyEvent toAwt(final KeyEvent event)
+    {
+        final EventType type = event.getEventType();
+        if (null == type)
+        {
+            return null;
+        }
+
+        final int id;
+        if (KeyEvent.KEY_TYPED.equals(type))
+        {
+            id = java.awt.event.KeyEvent.KEY_TYPED;
+        }
+        else if (KeyEvent.KEY_PRESSED.equals(type))
+        {
+            id = java.awt.event.KeyEvent.KEY_PRESSED;
+        }
+        else if (KeyEvent.KEY_RELEASED.equals(type))
+        {
+            id = java.awt.event.KeyEvent.KEY_RELEASED;
+        }
+        else
+        {
+            return null;
+        }
+
+        final long when = System.currentTimeMillis();
+        final int modifiers = modifiers(event);
+        final int keyCode = keyCode(event);
+        final String keyValue = event.getCharacter();
+        final char keyChar = keyValue != null && !keyValue.isEmpty() ? keyValue.charAt(0) : ' ';
+        return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
+    }
+
+
+    private static int keyCode(final KeyEvent event)
+    {
+        if (null == event)
+        {
+            return 0;
+        }
+        switch (event.getCode())
+        {
+            case UP:
+                return java.awt.event.KeyEvent.VK_UP;
+            case DOWN:
+                return java.awt.event.KeyEvent.VK_DOWN;
+            case LEFT:
+                return java.awt.event.KeyEvent.VK_LEFT;
+            case RIGHT:
+                return java.awt.event.KeyEvent.VK_RIGHT;
+
+            case PAGE_UP:
+                return java.awt.event.KeyEvent.VK_PAGE_UP;
+            case PAGE_DOWN:
+                return java.awt.event.KeyEvent.VK_PAGE_DOWN;
+
+            default:
+                return 0;
+        }
+    }
+
+
+    private static int modifiers(final InputEvent event)
+    {
+        if (event instanceof MouseEvent)
+        {
+            final MouseEvent mouseEvent = (MouseEvent) event;
+            int modifiers = 0;
+            if (mouseEvent.isAltDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.ALT_MASK;
+            }
+            if (mouseEvent.isControlDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.CTRL_MASK;
+            }
+            if (mouseEvent.isMetaDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.META_MASK;
+            }
+            if (mouseEvent.isShiftDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.SHIFT_MASK;
+            }
+            if (mouseEvent.isPrimaryButtonDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.BUTTON1_MASK;
+            }
+            if (mouseEvent.isSecondaryButtonDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.BUTTON2_MASK;
+            }
+            if (mouseEvent.isMiddleButtonDown())
+            {
+                modifiers |= java.awt.event.MouseEvent.BUTTON3_MASK;
+            }
+            return modifiers;
+        }
+
+        if (event instanceof KeyEvent)
+        {
+            final KeyEvent keyEvent = (KeyEvent) event;
+            int modifiers = 0;
+            if (keyEvent.isAltDown())
+            {
+                modifiers |= java.awt.event.KeyEvent.ALT_MASK;
+            }
+            if (keyEvent.isControlDown())
+            {
+                modifiers |= java.awt.event.KeyEvent.CTRL_MASK;
+            }
+            if (keyEvent.isMetaDown())
+            {
+                modifiers |= java.awt.event.KeyEvent.META_MASK;
+            }
+            if (keyEvent.isShiftDown())
+            {
+                modifiers |= java.awt.event.KeyEvent.SHIFT_MASK;
+            }
+            return modifiers;
+        }
+
+        return 0;
+    }
+
+
+    private SwingUtils()
+    {
+    }
+}
