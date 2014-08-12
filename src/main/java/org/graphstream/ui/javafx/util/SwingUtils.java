@@ -63,13 +63,31 @@ public class SwingUtils
             return null;
         }
 
+        final int button;
+        if (event.isPrimaryButtonDown())
+        {
+            button = java.awt.event.MouseEvent.BUTTON1;
+        }
+        else if (event.isMiddleButtonDown())
+        {
+            button = java.awt.event.MouseEvent.BUTTON2;
+        }
+        else if (event.isSecondaryButtonDown())
+        {
+            button = java.awt.event.MouseEvent.BUTTON3;
+        }
+        else
+        {
+            button = java.awt.event.MouseEvent.NOBUTTON;
+        }
+
         final long when = System.currentTimeMillis();
         final int modifiers = modifiers(event);
         final int x = (int) event.getX();
         final int y = (int) event.getY();
         final int count = event.getClickCount();
         final boolean popup = event.isPopupTrigger();
-        return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, count, popup);
+        return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, count, popup, button);
     }
 
 
@@ -187,11 +205,11 @@ public class SwingUtils
             {
                 modifiers |= java.awt.event.MouseEvent.BUTTON1_MASK;
             }
-            if (mouseEvent.isSecondaryButtonDown())
+            if (mouseEvent.isMiddleButtonDown())
             {
                 modifiers |= java.awt.event.MouseEvent.BUTTON2_MASK;
             }
-            if (mouseEvent.isMiddleButtonDown())
+            if (mouseEvent.isSecondaryButtonDown())
             {
                 modifiers |= java.awt.event.MouseEvent.BUTTON3_MASK;
             }
