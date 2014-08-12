@@ -4,6 +4,7 @@ import javafx.event.EventType;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 
 import javax.swing.JLabel;
 import java.awt.Component;
@@ -11,7 +12,7 @@ import java.awt.Component;
 
 /**
  * common swing utilities
- * <p>
+ * <p/>
  * User: bowen
  * Date: 8/3/14
  */
@@ -103,6 +104,31 @@ public class SwingUtils
         final int keyCode = keyCode(event);
         final String keyValue = event.getCharacter();
         final char keyChar = keyValue != null && !keyValue.isEmpty() ? keyValue.charAt(0) : ' ';
+        return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
+    }
+
+
+    public static java.awt.event.KeyEvent toAwt(final ScrollEvent event)
+    {
+        final EventType type = event.getEventType();
+        if (null == type)
+        {
+            return null;
+        }
+
+        final long when = System.currentTimeMillis();
+        final int id = java.awt.event.KeyEvent.KEY_PRESSED;
+        final int keyCode;
+        if (event.getDeltaY() > 0)
+        {
+            keyCode = java.awt.event.KeyEvent.VK_PAGE_DOWN;
+        }
+        else
+        {
+            keyCode = java.awt.event.KeyEvent.VK_PAGE_UP;
+        }
+        final int modifiers = modifiers(event);
+        final char keyChar = ' ';
         return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
     }
 

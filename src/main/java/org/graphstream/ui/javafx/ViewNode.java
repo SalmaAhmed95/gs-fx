@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.stage.Stage;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
@@ -371,12 +372,19 @@ public class ViewNode extends Canvas implements View
                 motionListeners.forEach(l -> l.mouseDragged(awt));
             }
         });
-
         this.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 motionListeners.forEach(l -> l.mouseMoved(awt));
+            }
+        });
+
+        this.addEventFilter(ScrollEvent.SCROLL, event -> {
+            final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
+            {
+                keyListeners.forEach(l -> l.keyPressed(awt));
             }
         });
     }
