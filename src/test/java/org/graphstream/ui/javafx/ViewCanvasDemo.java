@@ -7,13 +7,16 @@ import org.graphstream.algorithm.generator.Generator;
 import org.graphstream.algorithm.generator.RandomEuclideanGenerator;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.layout.Layout;
+import org.graphstream.ui.layout.LayoutRunner;
+import org.graphstream.ui.layout.springbox.implementations.SpringBox;
 import org.graphstream.ui.view.Viewer;
 
 import java.util.UUID;
 
 /**
  * simple demo class
- * <p>
+ * <p/>
  * User: bowen
  * Date: 8/3/14
  */
@@ -32,39 +35,36 @@ public class ViewCanvasDemo extends Application
     @Override
     public void start(Stage stage) throws Exception
     {
-        final ViewNode view = new ViewNode();
         final Graph graph = new SingleGraph(UUID.randomUUID().toString());
         graph.addAttribute("ui.antialias");
         graph.addAttribute("ui.quality");
         graph.addAttribute("ui.stylesheet", "node:selected { fill-color: red; }");
-        final Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 
+        final Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
+        final ViewNode view = new ViewNode(viewer);
         viewer.addView(view);
+        viewer.enableAutoLayout();
+        view.getCamera().setAutoFitView(true);
         this.application = view.openInApplication();
         this.application.start(stage);
 
-        final Runnable worker = new Runnable()
-        {
-            @Override
-            public void run()
+        final Runnable worker = () -> {
+            Generator generator = new RandomEuclideanGenerator();
+            generator.addSink(graph);
+            generator.begin();
+            for (int i = 0; i < 200; i++)
             {
-                Generator generator = new RandomEuclideanGenerator();
-                generator.addSink(graph);
-                generator.begin();
-                for (int i = 0; i < 200; i++)
+                generator.nextEvents();
+                try
                 {
-                    generator.nextEvents();
-                    try
-                    {
-                        Thread.sleep(100);
-                    }
-                    catch (InterruptedException ex)
-                    {
-                        ex.printStackTrace();
-                    }
+                    Thread.sleep(100);
                 }
-                generator.end();
+                catch (InterruptedException ex)
+                {
+                    ex.printStackTrace();
+                }
             }
+            generator.end();
         };
         final Thread thread = new Thread(worker);
         thread.setDaemon(true);

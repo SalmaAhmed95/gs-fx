@@ -1,7 +1,7 @@
 package org.graphstream.ui.javafx;
 
 import javafx.application.Application;
-import javafx.event.EventHandler;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * a javafx graph view
- * <p>
+ * <p/>
  * User: bowen
  * Date: 8/2/14
  */
@@ -47,39 +47,53 @@ public class ViewNode extends Canvas implements View
 
     private final ViewRenderer renderer;
 
-    private GraphicGraph graph;
+    private final GraphicGraph graph;
 
     private ShortcutManager shortcuts;
 
     private MouseManager mouseClicks;
 
 
-    public ViewNode()
+    public ViewNode(final Viewer viewer)
     {
-        this(Viewer.newGraphRenderer());
+        this(viewer, Viewer.newGraphRenderer());
     }
 
 
-    public ViewNode(final GraphRenderer delegate)
+    public ViewNode(final Viewer viewer, final GraphRenderer delegate)
     {
-        this(UUID.randomUUID().toString(), delegate);
+        this(UUID.randomUUID().toString(), viewer, delegate);
     }
 
 
-    public ViewNode(final String identifier, final GraphRenderer delegate)
+    public ViewNode(final String identifier, final Viewer viewer, final GraphRenderer delegate)
     {
         super(defaultWidth, defaultHeight);
         if (null == delegate)
         {
             throw new IllegalArgumentException("Renderer cannot be null.");
         }
+        if (null == viewer)
+        {
+            throw new IllegalArgumentException("Viewer cannot be null.");
+        }
         if (null == identifier || identifier.isEmpty())
         {
             throw new IllegalArgumentException("Id cannot be null/empty.");
         }
         this.setId(identifier);
+        this.graph = viewer.getGraphicGraph();
         this.renderer = new ViewRenderer(delegate);
+        this.renderer.open(graph, this);
         this.wireEvents();
+        if (null == this.mouseClicks)
+        {
+            this.setMouseManager(new DefaultMouseManager());
+        }
+        if (null == this.shortcuts)
+        {
+            this.setShortcutManager(new DefaultShortcutManager());
+        }
     }
 
 
@@ -99,23 +113,6 @@ public class ViewNode extends Canvas implements View
     @Override
     public void display(final GraphicGraph graph, final boolean graphChanged)
     {
-        if (null == graph)
-        {
-            throw new IllegalArgumentException("Graph cannot be null.");
-        }
-        if (this.graph != graph)
-        {
-            this.graph = graph;
-            this.renderer.open(graph, this);
-        }
-        if (null == this.mouseClicks)
-        {
-            this.setMouseManager(new DefaultMouseManager());
-        }
-        if (null == this.shortcuts)
-        {
-            this.setShortcutManager(new DefaultShortcutManager());
-        }
         this.renderer.repaint();
     }
 
@@ -123,7 +120,6 @@ public class ViewNode extends Canvas implements View
     @Override
     public void close(final GraphicGraph graph)
     {
-        this.graph = null;
         this.renderer.close();
 
         if (this.shortcuts != null)
@@ -310,127 +306,77 @@ public class ViewNode extends Canvas implements View
 
     private void wireEvents()
     {
-        this.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>()
-        {
-            @Override
-            public void handle(final KeyEvent event)
+        this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    keyListeners.forEach(l -> l.keyPressed(awt));
-                }
+                keyListeners.forEach(l -> l.keyPressed(awt));
             }
         });
-        this.addEventHandler(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>()
-        {
-            @Override
-            public void handle(final KeyEvent event)
+        this.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
+            final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    keyListeners.forEach(l -> l.keyReleased(awt));
-                }
+                keyListeners.forEach(l -> l.keyReleased(awt));
             }
         });
-        this.addEventHandler(KeyEvent.KEY_TYPED, new EventHandler<KeyEvent>()
-        {
-            @Override
-            public void handle(final KeyEvent event)
+        this.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+            final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    keyListeners.forEach(l -> l.keyTyped(awt));
-                }
+                keyListeners.forEach(l -> l.keyTyped(awt));
             }
         });
 
-        this.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    mouseListeners.forEach(l -> l.mouseClicked(awt));
-                }
+                mouseListeners.forEach(l -> l.mouseClicked(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    mouseListeners.forEach(l -> l.mousePressed(awt));
-                }
+                mouseListeners.forEach(l -> l.mousePressed(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    mouseListeners.forEach(l -> l.mouseReleased(awt));
-                }
+                mouseListeners.forEach(l -> l.mouseReleased(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    mouseListeners.forEach(l -> l.mouseEntered(awt));
-                }
+                mouseListeners.forEach(l -> l.mouseEntered(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    mouseListeners.forEach(l -> l.mouseExited(awt));
-                }
+                mouseListeners.forEach(l -> l.mouseExited(awt));
             }
         });
 
-        this.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    motionListeners.forEach(l -> l.mouseDragged(awt));
-                }
+                motionListeners.forEach(l -> l.mouseDragged(awt));
             }
         });
 
-        this.addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>()
-        {
-            @Override
-            public void handle(final MouseEvent event)
+        this.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+            final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
+            if (awt != null)
             {
-                final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
-                if (awt != null)
-                {
-                    motionListeners.forEach(l -> l.mouseMoved(awt));
-                }
+                motionListeners.forEach(l -> l.mouseMoved(awt));
             }
         });
     }
@@ -456,7 +402,14 @@ public class ViewNode extends Canvas implements View
             stage.setTitle(this.canvas.getId());
             stage.setScene(new Scene(root, defaultWidth, defaultHeight));
             stage.show();
-            this.canvas.getCamera().setAutoFitView(true);
+        }
+
+
+        @Override
+        public void stop()
+        {
+            Platform.exit();
+            System.exit(1);
         }
     }
 }

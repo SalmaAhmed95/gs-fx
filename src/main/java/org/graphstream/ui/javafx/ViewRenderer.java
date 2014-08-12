@@ -1,6 +1,5 @@
 package org.graphstream.ui.javafx;
 
-import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import org.graphstream.graph.Element;
@@ -14,11 +13,10 @@ import org.jfree.fx.FXGraphics2D;
 
 import java.awt.Graphics2D;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * a javafx graph renderer
- * <p>
+ * <p/>
  * User: bowen
  * Date: 7/29/14
  */
@@ -32,28 +30,7 @@ public class ViewRenderer implements StyleGroupListener
 
     private Canvas canvas;
 
-    private final AtomicBoolean dirty = new AtomicBoolean(false);
-
-    private final AnimationTimer timer = new AnimationTimer()
-    {
-        @Override
-        public void handle(final long l)
-        {
-            final Canvas view = ViewRenderer.this.canvas;
-            if (null == view)
-            {
-                return;
-            }
-            final double x = view.getLayoutX();
-            final double y = view.getLayoutY();
-            final double w = view.getWidth();
-            final double h = view.getHeight();
-            ViewRenderer.this.render(view.getGraphicsContext2D(), x, y, w, h);
-//          System.out.println("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
-            dirty.getAndSet(false);
-            this.stop();
-        }
-    };
+    private final ViewTimer timer;
 
 
     public ViewRenderer(final GraphRenderer delegate)
@@ -63,6 +40,13 @@ public class ViewRenderer implements StyleGroupListener
             throw new IllegalArgumentException("Delegate cannot be null.");
         }
         this.delegate = delegate;
+        this.timer = new ViewTimer(this);
+    }
+
+
+    public Canvas getCanvas()
+    {
+        return this.canvas;
     }
 
 
@@ -99,12 +83,7 @@ public class ViewRenderer implements StyleGroupListener
 
     public void repaint()
     {
-        if (this.dirty.get())
-        {
-            return;
-        }
-        this.dirty.getAndSet(true);
-        this.timer.start();
+        this.timer.repaint();
     }
 
 
