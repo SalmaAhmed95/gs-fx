@@ -16,8 +16,8 @@ import org.graphstream.ui.swingViewer.GraphRenderer;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
-import org.graphstream.ui.view.util.DefaultMouseManager;
 import org.graphstream.ui.view.util.DefaultShortcutManager;
+import org.graphstream.ui.view.util.ListeningMouseManager;
 import org.graphstream.ui.view.util.MouseManager;
 import org.graphstream.ui.view.util.ShortcutManager;
 
@@ -89,7 +89,7 @@ public class ViewNode extends Canvas implements View
         this.wireEvents();
         if (null == this.mouseClicks)
         {
-            this.setMouseManager(new DefaultMouseManager());
+            this.setMouseManager(new ListeningMouseManager());
         }
         if (null == this.shortcuts)
         {

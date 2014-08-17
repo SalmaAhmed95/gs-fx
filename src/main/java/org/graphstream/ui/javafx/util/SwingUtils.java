@@ -188,18 +188,22 @@ public class SwingUtils
             if (mouseEvent.isAltDown())
             {
                 modifiers |= java.awt.event.MouseEvent.ALT_MASK;
+                modifiers |= java.awt.event.MouseEvent.ALT_DOWN_MASK;
             }
             if (mouseEvent.isControlDown())
             {
                 modifiers |= java.awt.event.MouseEvent.CTRL_MASK;
+                modifiers |= java.awt.event.MouseEvent.CTRL_DOWN_MASK;
             }
             if (mouseEvent.isMetaDown())
             {
                 modifiers |= java.awt.event.MouseEvent.META_MASK;
+                modifiers |= java.awt.event.MouseEvent.META_DOWN_MASK;
             }
             if (mouseEvent.isShiftDown())
             {
                 modifiers |= java.awt.event.MouseEvent.SHIFT_MASK;
+                modifiers |= java.awt.event.MouseEvent.SHIFT_DOWN_MASK;
             }
             if (mouseEvent.isPrimaryButtonDown())
             {
