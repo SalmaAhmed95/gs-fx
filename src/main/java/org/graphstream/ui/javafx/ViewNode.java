@@ -105,6 +105,27 @@ public class ViewNode extends Canvas implements View
 
 
     @Override
+    public boolean isResizable()
+    {
+        return true;
+    }
+
+
+    @Override
+    public double prefWidth(double height)
+    {
+        return this.getWidth();
+    }
+
+
+    @Override
+    public double prefHeight(double width)
+    {
+        return this.getHeight();
+    }
+
+
+    @Override
     public Camera getCamera()
     {
         return this.renderer.getCamera();
@@ -307,6 +328,9 @@ public class ViewNode extends Canvas implements View
 
     private void wireEvents()
     {
+        this.widthProperty().addListener(evt -> renderer.repaint());
+        this.heightProperty().addListener(evt -> renderer.repaint());
+
         this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
