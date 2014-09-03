@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 /**
  * a javafx view animation timer
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/10/14
  */
@@ -72,6 +72,23 @@ public class ViewTimer extends AnimationTimer
     @Override
     public void handle(final long l)
     {
+        try
+        {
+            this.render();
+        }
+        catch (final Exception e)
+        {
+            logger.log(Level.WARNING, "Unable to render javafx frame.", e);
+        }
+        if (logger.isLoggable(Level.FINE))
+        {
+            logger.fine("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
+        }
+    }
+
+
+    private void render()
+    {
         final Canvas view = this.renderer.getCanvas();
         if (null == view)
         {
@@ -89,10 +106,6 @@ public class ViewTimer extends AnimationTimer
             final double w = Math.max(0, view.getWidth());
             final double h = Math.max(0, view.getHeight());
             this.renderer.render(view.getGraphicsContext2D(), x, y, w, h);
-            if (logger.isLoggable(Level.FINE))
-            {
-                logger.fine("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
-            }
         }
 
         // if we haven't been set to repaint we can stop
