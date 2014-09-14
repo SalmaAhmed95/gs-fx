@@ -55,7 +55,6 @@ import org.jfree.fx.FXGraphics2D;
 
 import java.awt.Container;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -83,6 +82,10 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     private LayerRenderer backRenderer = null;
 
     private LayerRenderer foreRenderer = null;
+
+    private Color selectionStroke = new Color(Color.DARKORANGE.getRed(), Color.DARKORANGE.getGreen(), Color.DARKORANGE.getBlue(), .75d);
+
+    private Color selectionFill = new Color(Color.ORANGE.getRed(), Color.ORANGE.getGreen(), Color.ORANGE.getBlue(), .15d);
 
     private PrintStream fpsLog = null;
 
@@ -175,12 +178,14 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     }
 
 
+    @Override
     public GraphicElement findNodeOrSpriteAt(double x, double y)
     {
         return camera.findNodeOrSpriteAt(graph, x, y);
     }
 
 
+    @Override
     public void render(Graphics2D g, int x, int y, int width, int height)
     {
         throw new UnsupportedOperationException();
@@ -198,21 +203,24 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
             return;
         }
 
-        this.beginFrame();
+        if (logger.isLoggable(Level.FINE))
+        {
+            logger.fine("Rendering view (" + x + "," + y + ") width [" + width + "] height [" + height + "].");
+        }
 
-        if (camera.getGraphViewport() == null && camera.getMetrics().diagonal == 0 && (graph.getNodeCount() == 0 && graph.getSpriteCount() == 0))
+        this.beginFrame();
+        if (this.camera.getGraphViewport() == null && this.camera.getMetrics().diagonal == 0 && (this.graph.getNodeCount() == 0 && this.graph.getSpriteCount() == 0))
         {
             displayNothingToDo(g, width, height);
         }
         else
         {
-            camera.setPadding(graph);
-            camera.setViewport(x, y, width, height);
+            this.camera.setPadding(this.graph);
+            this.camera.setViewport(x, y, width, height);
             renderGraph(g);
             renderSelection(g);
         }
-
-        endFrame();
+        this.endFrame();
     }
 
 
@@ -221,6 +229,38 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     {
         Point3 p = camera.transformPxToGu(camera.getMetrics().viewport[0] + x, camera.getMetrics().viewport[1] + y);
         element.move(p.x, p.y, element.getZ());
+    }
+
+
+    public Color getSelectionStroke()
+    {
+        return selectionStroke;
+    }
+
+
+    public void setSelectionStroke(Color selectionStroke)
+    {
+        if (null == selectionStroke)
+        {
+            throw new IllegalArgumentException("Color cannot be null.");
+        }
+        this.selectionStroke = selectionStroke;
+    }
+
+
+    public Color getSelectionFill()
+    {
+        return selectionFill;
+    }
+
+
+    public void setSelectionFill(Color selectionFill)
+    {
+        if (null == selectionFill)
+        {
+            throw new IllegalArgumentException("Color cannot be null.");
+        }
+        this.selectionFill = selectionFill;
     }
 
 
@@ -273,16 +313,14 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     private void renderGraph(final GraphicsContext g)
     {
         g.setTransform(new Affine());
-        final Graphics2D delegate = new FXGraphics2D(g);
-        setupGraphics(delegate);
         renderGraphBackground(g);
         renderBackLayer(new FXGraphics2D(g));
         try
         {
             this.camera.pushView(this.graph, g);
             renderGraphElements(g);
-            final StyleGroup style = this.graph.getStyle();
-            if (style.getStrokeMode() != StyleConstants.StrokeMode.NONE && style.getStrokeWidth().value > 0)
+            StyleGroup style = this.graph.getStyle();
+            if (!StyleConstants.StrokeMode.NONE.equals(style.getStrokeMode()) && style.getStrokeWidth().value > 0)
             {
                 GraphMetrics metrics = this.camera.getMetrics();
                 double px1 = metrics.px1;
@@ -294,55 +332,9 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
         }
         catch (final Exception e)
         {
-            logger.log(Level.WARNING, "Unexpected error during graph render.", e);
+            logger.log(Level.WARNING, "Unexpected error during graph rendering.", e);
         }
         renderForeLayer(new FXGraphics2D(g));
-    }
-
-
-    protected void setupGraphics(final Graphics2D g)
-    {
-        if (graph.hasAttribute("ui.antialias"))
-        {
-            g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                RenderingHints.VALUE_STROKE_PURE);
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-        }
-        else
-        {
-            g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                RenderingHints.VALUE_STROKE_DEFAULT);
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_OFF);
-        }
-
-        if (graph.hasAttribute("ui.quality"))
-        {
-            g.setRenderingHint(RenderingHints.KEY_RENDERING,
-                RenderingHints.VALUE_RENDER_SPEED);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
-                RenderingHints.VALUE_COLOR_RENDER_SPEED);
-            g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-                RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
-        }
-        else
-        {
-            g.setRenderingHint(RenderingHints.KEY_RENDERING,
-                RenderingHints.VALUE_RENDER_QUALITY);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
-                RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-            g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-                RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        }
     }
 
 
@@ -427,10 +419,10 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
             y2 = t;
         }
 
-        g.setLineWidth(1);
-        g.setFill(Color.rgb(50, 50, 200, .5d));
+        g.setLineWidth(1.5d);
+        g.setFill(this.selectionFill);
         g.fillRect(x1, y1, x2 - x1, y2 - y1);
-        g.setStroke(Color.rgb(0, 0, 0, .5d));
+        g.setStroke(this.selectionStroke);
         g.strokeRect(x1, y1, x2 - x1, y2 - y1);
     }
 
@@ -458,10 +450,10 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     private void renderLayer(final LayerRenderer layer, final Graphics2D g)
     {
         final GraphMetrics metrics = camera.getMetrics();
-        this.backRenderer.render(g, graph, metrics.ratioPx2Gu,
+        layer.render(g, graph, metrics.ratioPx2Gu,
             (int) metrics.viewport[2], (int) metrics.viewport[3],
-            metrics.loVisible.x, metrics.loVisible.y, metrics.hiVisible.x,
-            metrics.hiVisible.y);
+            metrics.loVisible.x, metrics.loVisible.y,
+            metrics.hiVisible.x, metrics.hiVisible.y);
     }
 
 

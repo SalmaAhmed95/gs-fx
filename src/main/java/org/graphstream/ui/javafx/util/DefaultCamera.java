@@ -267,11 +267,11 @@ public class DefaultCamera implements Camera
     {
         if (this.autoFit)
         {
-            autoFitView(g);
+            autoFitView();
         }
         else
         {
-            userView(g);
+            userView();
         }
     }
 
@@ -348,8 +348,7 @@ public class DefaultCamera implements Camera
 
 
     @Override
-    public void setGraphViewport(double minx, double miny, double maxx,
-                                 double maxy)
+    public void setGraphViewport(double minx, double miny, double maxx, double maxy)
     {
         setAutoFitView(false);
         setViewCenter(minx + (maxx - minx) / 2.0, miny + (maxy - miny) / 2.0);
@@ -360,8 +359,7 @@ public class DefaultCamera implements Camera
         gviewport[2] = maxx;
         gviewport[3] = maxy;
 
-        gviewportDiagonal = Math.sqrt((maxx - minx) * (maxx - minx)
-            + (maxy - miny) * (maxy - miny));
+        gviewportDiagonal = Math.sqrt((maxx - minx) * (maxx - minx) + (maxy - miny) * (maxy - miny));
 
         setZoom(1);
     }
@@ -376,19 +374,14 @@ public class DefaultCamera implements Camera
     }
 
 
-    private void autoFitView(GraphicsContext g2)
+    private void autoFitView()
     {
-        double padXgu = getPaddingXgu() * 2;
-        double padYgu = getPaddingYgu() * 2;
-        double padXpx = getPaddingXpx() * 2;
-        double padYpx = getPaddingYpx() * 2;
-
-        double sx = (metrics.viewport[2] - padXpx) / (metrics.size.data[0] + padXgu);
-        double sy = (metrics.viewport[3] - padYpx) / (metrics.size.data[1] + padYgu);
-        double tx = metrics.lo.x + (metrics.size.data[0] / 2);
-        double ty = metrics.lo.y + (metrics.size.data[1] / 2);
-        double centerx = metrics.viewport[2] / 2d;
-        double centery = metrics.viewport[3] / 2d;
+        double sx = (metrics.getViewportWidth() - getPaddingXpx() * 2d) / (metrics.size.data[0] + getPaddingXgu() * 2d);
+        double sy = (metrics.getViewportHeight() - getPaddingYpx() * 2d) / (metrics.size.data[1] + getPaddingYgu() * 2d);
+        double tx = metrics.lo.x + (metrics.size.data[0] / 2d);
+        double ty = metrics.lo.y + (metrics.size.data[1] / 2d);
+        double centerx = metrics.getViewportX() + metrics.getViewportWidth() / 2d;
+        double centery = metrics.getViewportY() + metrics.getViewportHeight() / 2d;
         double scale = Math.min(sx, sy);
 
         this.Tx = new Affine();
@@ -418,14 +411,7 @@ public class DefaultCamera implements Camera
     }
 
 
-    /**
-     * Compute a transformation that pass from graph units (user space) to a
-     * pixel units (device space) so that the view (zoom and centre) requested
-     * by the user is produced.
-     *
-     * @param g2 The Swing graphics.
-     */
-    private void userView(GraphicsContext g2)
+    private void userView()
     {
         double padXgu = getPaddingXgu() * 2;
         double padYgu = getPaddingYgu() * 2;
@@ -474,8 +460,7 @@ public class DefaultCamera implements Camera
     {
         if (this.autoFit && (!on))
         {
-            // We go from autoFit to user view, ensure the current centre is at
-            // the middle of the graph, and the zoom is at one.
+            // ensure the current centre is at the middle of the graph, and the zoom is at one
             this.zoom = 1;
             this.center.set(metrics.lo.x + (metrics.size.data[0] / 2), metrics.lo.y + (metrics.size.data[1] / 2), 0);
         }
@@ -485,28 +470,29 @@ public class DefaultCamera implements Camera
 
     public void setZoom(double z)
     {
-        zoom = z;
-        graph.graphChanged = true;
+        this.zoom = z;
+        this.graph.graphChanged = true;
+        logger.fine("Zoom value updated to [" + z + "].");
     }
 
 
     @Override
     public void setViewRotation(double theta)
     {
-        rotation = theta;
-        graph.graphChanged = true;
+        this.rotation = theta;
+        this.graph.graphChanged = true;
     }
 
 
     public void setViewport(double viewportX, double viewportY, double viewportWidth, double viewportHeight)
     {
-        metrics.setViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+        this.metrics.setViewport(viewportX, viewportY, viewportWidth, viewportHeight);
     }
 
 
     public void setPadding(GraphicGraph graph)
     {
-        padding.copy(graph.getStyle().getPadding());
+        this.padding.copy(graph.getStyle().getPadding());
     }
 
 
@@ -566,37 +552,45 @@ public class DefaultCamera implements Camera
 
     private double getPaddingXpx()
     {
-        if (padding.units == Units.PX && padding.size() > 0)
+        if (Units.PX.equals(this.padding.units) && this.padding.size() > 0)
         {
-            return padding.get(0);
+            return this.padding.get(0);
         }
-        return 0;
+        else
+        {
+            return 0;
+        }
     }
 
 
     private double getPaddingYpx()
     {
-        if (padding.units == Units.PX && padding.size() > 1)
+        if (Units.PX.equals(this.padding.units) && this.padding.size() > 0)
         {
-            return padding.get(1);
+            return this.padding.get(0);
         }
-        return getPaddingXpx();
+        else
+        {
+            return 0;
+        }
     }
 
 
     private boolean isSpriteVisible(GraphicSprite sprite)
     {
-        return isSpriteIn(sprite, metrics.viewport[0], metrics.viewport[1],
-            metrics.viewport[0] + metrics.viewport[2], metrics.viewport[1]
-                + metrics.viewport[3]);
+        return isSpriteIn(sprite,
+            this.metrics.getViewportX(), this.metrics.getViewportY(),
+            this.metrics.getViewportX() + this.metrics.getViewportWidth(),
+            this.metrics.getViewportY() + this.metrics.getViewportHeight());
     }
 
 
     private boolean isNodeVisible(GraphicNode node)
     {
-        return isNodeIn(node, metrics.viewport[0], metrics.viewport[1],
-            metrics.viewport[0] + metrics.viewport[2], metrics.viewport[1]
-                + metrics.viewport[3]);
+        return isNodeIn(node,
+            this.metrics.getViewportX(), this.metrics.getViewportY(),
+            this.metrics.getViewportX() + this.metrics.getViewportWidth(),
+            this.metrics.getViewportY() + this.metrics.getViewportHeight());
     }
 
 
@@ -610,7 +604,12 @@ public class DefaultCamera implements Camera
             return false;
         }
 
-        if ((!node1.positionned) || (!node0.positionned))
+        if (!node0.positionned)
+        {
+            return false;
+        }
+
+        if (!node1.positionned)
         {
             return false;
         }
@@ -715,7 +714,7 @@ public class DefaultCamera implements Camera
 
         javafx.geometry.Point2D dst = Tx.transform(elt.getX(), elt.getY());
 
-        dst.subtract(metrics.viewport[0], metrics.viewport[1]);
+        dst.subtract(this.metrics.getViewportX(), this.metrics.getViewportY());
 
         double x1 = dst.getX() - w2;
         double x2 = dst.getX() + w2;
@@ -760,10 +759,10 @@ public class DefaultCamera implements Camera
             return false;
         }
 
-        final double x1 = dst.getX() - metrics.viewport[0] - w2;
-        final double x2 = dst.getX() - metrics.viewport[0] + w2;
-        final double y1 = dst.getY() - metrics.viewport[1] - h2;
-        final double y2 = dst.getY() - metrics.viewport[1] + h2;
+        final double x1 = dst.getX() - this.metrics.getViewportX() - w2;
+        final double x2 = dst.getX() - this.metrics.getViewportX() + w2;
+        final double y1 = dst.getY() - this.metrics.getViewportY() - h2;
+        final double y2 = dst.getY() - this.metrics.getViewportY() + h2;
 
         if (x < x1)
         {
@@ -819,8 +818,8 @@ public class DefaultCamera implements Camera
 
         if (Units.PX.equals(units) && Units.PERCENTS.equals(sprite.getUnits()))
         {
-            final double x = (sprite.getX() / 100d) * metrics.viewport[2];
-            final double y = (sprite.getY() / 100d) * metrics.viewport[3];
+            final double x = (sprite.getX() / 100d) * this.metrics.getViewportWidth();
+            final double y = (sprite.getY() / 100d) * this.metrics.getViewportHeight();
             return new Point2D(x, y);
         }
 

@@ -30,7 +30,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * a javafx graph view
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/2/14
  */
