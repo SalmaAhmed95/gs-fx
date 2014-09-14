@@ -5,6 +5,7 @@ import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.paint.Color;
 
 import javax.swing.JLabel;
 import java.awt.Component;
@@ -12,13 +13,30 @@ import java.awt.Component;
 
 /**
  * common swing utilities
- * <p/>
+ * <p>
  * User: bowen
  * Date: 8/3/14
  */
 public class SwingUtils
 {
     private static final Component empty = new JLabel();
+
+
+    public static Color fromAwt(final java.awt.Color color)
+    {
+        if (null == color)
+        {
+            return null;
+        }
+        if (color.getAlpha() >= 255)
+        {
+            return Color.color(color.getRed() / 255d, color.getGreen() / 255d, color.getBlue() / 255d);
+        }
+        else
+        {
+            return Color.color(color.getRed() / 255d, color.getGreen() / 255d, color.getBlue() / 255d, color.getAlpha() / 255d);
+        }
+    }
 
 
     public static java.awt.event.MouseEvent toAwt(final MouseEvent event)

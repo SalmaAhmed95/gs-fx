@@ -7,24 +7,22 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupListener;
+import org.graphstream.ui.javafx.renderer.JavafxGraphRenderer;
 import org.graphstream.ui.swingViewer.GraphRenderer;
 import org.graphstream.ui.view.Camera;
 import org.jfree.fx.FXGraphics2D;
 
-import java.awt.Graphics2D;
 import java.util.Collection;
 
 /**
  * a javafx graph renderer
- * <p/>
+ * <p>
  * User: bowen
  * Date: 7/29/14
  */
 public class ViewRenderer implements StyleGroupListener
 {
     private final GraphRenderer delegate;
-
-    private Graphics2D graphics;
 
     private GraphicGraph graph;
 
@@ -64,7 +62,6 @@ public class ViewRenderer implements StyleGroupListener
         this.graph.getStyleGroups().addListener(this);
         this.delegate.open(graph, null);
         this.canvas = canvas;
-        this.graphics = new FXGraphics2D(this.canvas.getGraphicsContext2D());
     }
 
 
@@ -113,7 +110,23 @@ public class ViewRenderer implements StyleGroupListener
 
     public void render(final GraphicsContext ctx, final double x, final double y, final double width, final double height)
     {
-        this.delegate.render(this.graphics, (int) x, (int) y, (int) width, (int) height);
+        if (null == this.graph)
+        {
+            return;
+        }
+        if (this.graph.getNodeCount() <= 0)
+        {
+            return;
+        }
+        if (this.delegate instanceof JavafxGraphRenderer)
+        {
+            final JavafxGraphRenderer fx = (JavafxGraphRenderer) this.delegate;
+            fx.render(ctx, x, y, width, height);
+        }
+        else
+        {
+            this.delegate.render(new FXGraphics2D(this.canvas.getGraphicsContext2D()), (int) x, (int) y, (int) width, (int) height);
+        }
     }
 
 
