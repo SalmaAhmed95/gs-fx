@@ -29,7 +29,7 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.javafx.util;
+package org.graphstream.ui.javafx.renderer;
 
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
@@ -55,6 +55,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -82,34 +84,36 @@ import java.util.logging.Logger;
  * cursor actually ?".
  * </p>
  */
-public class DefaultCamera implements Camera
+public class FxCamera implements Camera
 {
-    private static final Logger logger = Logger.getLogger(DefaultCamera.class.getSimpleName());
+    private static final Logger logger = Logger.getLogger(FxCamera.class.getSimpleName());
 
-    protected GraphicGraph graph = null;
+    private GraphicGraph graph = null;
 
-    protected GraphMetrics metrics = new GraphMetrics();
+    private GraphMetrics metrics = new GraphMetrics();
 
-    protected boolean autoFit = true;
+    private boolean autoFit = true;
 
-    protected Point3 center = new Point3();
+    private Point3 center = new Point3();
 
-    protected double zoom;
+    private double zoom;
 
-    protected Affine Tx = new Affine();
+    private Affine Tx = new Affine();
 
-    protected Affine xT;
+    private Affine xT;
 
-    protected double rotation;
+    private double rotation;
 
-    protected Values padding = new Values(Units.GU, 0, 0, 0);
+    private Values padding = new Values(Units.GU, 0, 0, 0);
 
-    protected double gviewport[] = null;
+    private double gviewport[] = null;
 
-    protected double gviewportDiagonal = 0;
+    private double gviewportDiagonal = 0;
+
+    private final Map<String, ElementContext> elements = new TreeMap<>();
 
 
-    public DefaultCamera(GraphicGraph graph)
+    public FxCamera(GraphicGraph graph)
     {
         this.graph = graph;
     }
@@ -125,9 +129,9 @@ public class DefaultCamera implements Camera
     @Override
     public void setViewCenter(double x, double y, double z)
     {
-        setAutoFitView(false);
-        center.set(x, y, z);
-        graph.graphChanged = true;
+        this.setAutoFitView(false);
+        this.center.set(x, y, z);
+        this.graph.graphChanged = true;
     }
 
 
@@ -276,7 +280,50 @@ public class DefaultCamera implements Camera
     }
 
 
-    public GraphicElement findNodeOrSpriteAt(GraphicGraph graph, double x, double y)
+    public boolean putElement(final ElementContext context)
+    {
+        if (null == context)
+        {
+            return false;
+        }
+        final String id = context.getId();
+        if (null == id || id.isEmpty())
+        {
+            return false;
+        }
+        if (context.getBounds() == null || context.getBounds().getWidth() <= 0 || context.getBounds().getHeight() <= 0)
+        {
+            return this.elements.remove(id) != null;
+        }
+        else
+        {
+            this.elements.put(id, context);
+            return true;
+        }
+    }
+
+
+    public boolean removeElement(final String id)
+    {
+        if (null == id)
+        {
+            return false;
+        }
+        return this.elements.remove(id) != null;
+    }
+
+
+    public ElementContext getElement(final String id)
+    {
+        if (null == id)
+        {
+            return null;
+        }
+        return this.elements.get(id);
+    }
+
+
+    public GraphicElement findNodeOrSpriteAt(final GraphicGraph graph, final double x, final double y)
     {
         for (Node n : graph)
         {

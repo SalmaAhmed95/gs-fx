@@ -34,17 +34,21 @@ package org.graphstream.ui.javafx.renderer;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.Element;
+import org.graphstream.graph.Node;
 import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.graphicGraph.GraphicNode;
+import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupListener;
 import org.graphstream.ui.graphicGraph.StyleGroupSet;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
-import org.graphstream.ui.javafx.util.DefaultCamera;
 import org.graphstream.ui.javafx.util.SwingUtils;
 import org.graphstream.ui.swingViewer.GraphRenderer;
 import org.graphstream.ui.swingViewer.LayerRenderer;
@@ -63,15 +67,15 @@ import java.util.logging.Logger;
 /**
  * A base graph renderer for JavaFX.
  */
-public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
+public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 {
-    private static final Logger logger = Logger.getLogger(JavafxGraphRenderer.class.getName());
+    private static final Logger logger = Logger.getLogger(FxGraphRenderer.class.getName());
 
     private GraphicGraph graph;
 
     private Selection selection = null;
 
-    private DefaultCamera camera = null;
+    private FxCamera camera = null;
 
     private NodeRenderer nodeRenderer = new NodeRenderer();
 
@@ -96,7 +100,7 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     private double sumFps = 0;
 
 
-    public JavafxGraphRenderer()
+    public FxGraphRenderer()
     {
 
     }
@@ -111,7 +115,7 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
         }
         this.graph = graph;
         this.graph.getStyleGroups().addListener(this);
-        this.camera = new DefaultCamera(graph);
+        this.camera = new FxCamera(graph);
     }
 
 
@@ -174,14 +178,14 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     @Override
     public Collection<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2)
     {
-        return camera.allNodesOrSpritesIn(graph, x1, y1, x2, y2);
+        return this.camera.allNodesOrSpritesIn(graph, x1, y1, x2, y2);
     }
 
 
     @Override
     public GraphicElement findNodeOrSpriteAt(double x, double y)
     {
-        return camera.findNodeOrSpriteAt(graph, x, y);
+        return this.camera.findNodeOrSpriteAt(graph, x, y);
     }
 
 
@@ -217,8 +221,8 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
         {
             this.camera.setPadding(this.graph);
             this.camera.setViewport(x, y, width, height);
-            renderGraph(g);
-            renderSelection(g);
+            this.renderGraph(g);
+            this.renderSelection(g);
         }
         this.endFrame();
     }
@@ -313,12 +317,13 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     private void renderGraph(final GraphicsContext g)
     {
         g.setTransform(new Affine());
-        renderGraphBackground(g);
-        renderBackLayer(new FXGraphics2D(g));
+        this.renderGraphBackground(g);
+        this.renderBackLayer(new FXGraphics2D(g));
         try
         {
             this.camera.pushView(this.graph, g);
-            renderGraphElements(g);
+            this.computeGraphElements();
+            this.renderGraphElements(g);
             StyleGroup style = this.graph.getStyle();
             if (!StyleConstants.StrokeMode.NONE.equals(style.getStrokeMode()) && style.getStrokeWidth().value > 0)
             {
@@ -355,7 +360,63 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
     }
 
 
-    protected void renderGraphElements(final GraphicsContext g)
+    private void computeGraphElements()
+    {
+        for (final Node node : this.graph.getEachNode())
+        {
+            final StyleGroup group = this.graph.getStyleGroups().getStyleFor(node);
+            ElementContext context = null;
+            if (group != null)
+            {
+                context = this.nodeRenderer.computeElement(group, this.camera, (GraphicNode) node);
+            }
+            if (context != null)
+            {
+                this.camera.putElement(context);
+            }
+            else
+            {
+                this.camera.removeElement(node.getId());
+            }
+        }
+        for (final Edge edge : this.graph.getEachEdge())
+        {
+            final StyleGroup group = this.graph.getStyleGroups().getStyleFor(edge);
+            ElementContext context = null;
+            if (group != null)
+            {
+                context = this.edgeRenderer.computeElement(group, this.camera, (GraphicEdge) edge);
+            }
+            if (context != null)
+            {
+                this.camera.putElement(context);
+            }
+            else
+            {
+                this.camera.removeElement(edge.getId());
+            }
+        }
+        for (final GraphicSprite sprite : this.graph.spriteSet())
+        {
+            final StyleGroup group = this.graph.getStyleGroups().getStyleFor(sprite);
+            ElementContext context = null;
+            if (group != null)
+            {
+                context = this.spriteRenderer.computeElement(group, this.camera, sprite);
+            }
+            if (context != null)
+            {
+                this.camera.putElement(context);
+            }
+            else
+            {
+                this.camera.removeElement(sprite.getId());
+            }
+        }
+    }
+
+
+    private void renderGraphElements(final GraphicsContext g)
     {
         final StyleGroupSet sgs = graph.getStyleGroups();
         if (null == sgs)
@@ -366,27 +427,21 @@ public class JavafxGraphRenderer implements GraphRenderer, StyleGroupListener
         {
             for (final StyleGroup group : groups)
             {
-                renderGroup(g, group);
+                switch (group.getType())
+                {
+                    case NODE:
+                        this.nodeRenderer.render(group, g, camera);
+                        break;
+                    case EDGE:
+                        this.edgeRenderer.render(group, g, camera);
+                        break;
+                    case SPRITE:
+                        this.spriteRenderer.render(group, g, camera);
+                        break;
+                    default:
+                        break;
+                }
             }
-        }
-    }
-
-
-    private void renderGroup(final GraphicsContext g, final StyleGroup group)
-    {
-        switch (group.getType())
-        {
-            case NODE:
-                nodeRenderer.render(group, g, camera);
-                break;
-            case EDGE:
-                edgeRenderer.render(group, g, camera);
-                break;
-            case SPRITE:
-                spriteRenderer.render(group, g, camera);
-                break;
-            default:
-                break;
         }
     }
 

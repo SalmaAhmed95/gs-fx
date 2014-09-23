@@ -35,7 +35,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
-import org.graphstream.ui.geom.Vector2;
+import javafx.scene.transform.Affine;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
@@ -43,11 +43,7 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
-import org.graphstream.ui.javafx.util.DefaultCamera;
-import org.graphstream.ui.view.Camera;
-
-import java.awt.geom.Path2D;
+import org.graphstream.ui.javafx.util.Approximations;
 
 public class EdgeRenderer extends ElementRenderer
 {
@@ -59,7 +55,7 @@ public class EdgeRenderer extends ElementRenderer
 
 
     @Override
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
 
@@ -74,7 +70,7 @@ public class EdgeRenderer extends ElementRenderer
 
 
     @Override
-    protected void pushStyle(StyleGroup group, GraphicsContext g, Camera camera)
+    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
@@ -85,100 +81,98 @@ public class EdgeRenderer extends ElementRenderer
 
 
     @Override
-    protected void elementInvisible(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    {
+        return null;
+    }
+
+
+    @Override
+    protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
 
 
     @Override
-    protected void renderElement(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         GraphicEdge edge = (GraphicEdge) element;
-        DefaultCamera camerafx = (DefaultCamera) camera;
-        GraphicNode node0 = edge.getNode0();
-        GraphicNode node1 = edge.getNode1();
-        Point2D pos0 = camerafx.graphToScreen(new Point2D(node0.x, node0.y));
-        Point2D pos1 = camerafx.graphToScreen(new Point2D(node1.x, node1.y));
+        ElementContext node0 = camera.getElement(edge.getNode0().getId());
+        ElementContext node1 = camera.getElement(edge.getNode1().getId());
+        if (null == node0 || null == node1)
+        {
+            return;
+        }
+        Point2D pos0 = node0.getPosition();
+        Point2D pos1 = node1.getPosition();
         g.strokeLine(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
         renderArrow(group, g, camera, edge);
         renderText(group, g, camera, element);
     }
 
 
-    private void renderArrow(StyleGroup group, GraphicsContext g, Camera camera, GraphicEdge edge)
+    private void renderArrow(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicEdge edge)
     {
-        if (edge.isDirected() && arrowWidth > 0 && arrowLength > 0)
+        if (!edge.isDirected())
         {
-            if (group.getArrowShape() != ArrowShape.NONE)
-            {
-                Path2D shape = new Path2D.Double();
-                GraphicNode node0 = edge.getNode0();
-                GraphicNode node1 = edge.getNode1();
-                double off = evalEllipseRadius(edge, node0, node1, camera);
-                Vector2 theDirection = new Vector2(node1.getX() - node0.getX(), node1.getY() - node0.getY());
-
-                theDirection.normalize();
-
-                double x = node1.x - (theDirection.data[0] * off);
-                double y = node1.y - (theDirection.data[1] * off);
-                Vector2 perp = new Vector2(theDirection.data[1], -theDirection.data[0]);
-
-                perp.normalize();
-                theDirection.scalarMult(arrowLength);
-                perp.scalarMult(arrowWidth);
-
-                shape.reset();
-                shape.moveTo(x, y);
-                shape.lineTo(x - theDirection.data[0] + perp.data[0], y - theDirection.data[1] + perp.data[1]);
-                shape.lineTo(x - theDirection.data[0] - perp.data[0], y - theDirection.data[1] - perp.data[1]);
-                shape.closePath();
-
-                this.strokeShake(shape, g);
-            }
+            return;
         }
-    }
-
-
-    private double evalEllipseRadius(GraphicEdge edge, GraphicNode node0, GraphicNode node1, Camera camera)
-    {
-        Values size = node1.getStyle().getSize();
-        double w = camera.getMetrics().lengthToGu(size.get(0), size.getUnits());
-        double h = size.size() > 1 ? camera.getMetrics().lengthToGu(
-            size.get(1), size.getUnits()) : w;
-
-        w /= 2;
-        h /= 2;
-
-        if (w == h)
+        if (ArrowShape.NONE.equals(group.getArrowShape()))
         {
-            return w; // Welcome simplification for circles ...
+            return;
+        }
+        if (this.arrowLength <= 0 || this.arrowWidth <= 0)
+        {
+            return;
         }
 
-        // Vector of the entering edge.
-        double dx = node1.getX() - node0.getX();
-        double dy = node1.getY() - node0.getY();
+        GraphicNode node0 = edge.getNode0();
+        GraphicNode node1 = edge.getNode1();
+        ElementContext ctx0 = camera.getElement(node0.getId());
+        ElementContext ctx1 = camera.getElement(node1.getId());
+        if (null == ctx0 || null == ctx1)
+        {
+            return;
+        }
 
-        // The entering edge must be deformed by the ellipse ratio to find the
-        // correct angle.
+        Point2D pos0 = camera.graphToScreen(new Point2D(node0.getX(), node0.getY()));
+        Point2D pos1 = camera.graphToScreen(new Point2D(node1.getX(), node1.getY()));
+        Point2D arrowCenter = ctx1.intersects(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
+        if (null == arrowCenter)
+        {
+            return;
+        }
 
-        dy *= (w / h);
+        Affine transform = new Affine();
+        double deltax = pos1.getX() - pos0.getX();
+        double deltay = pos1.getY() - pos0.getY();
+        transform.appendTranslation(arrowCenter.getX(), arrowCenter.getY());
+        if (Approximations.approximatelyEquals(deltay, 0d, 0.00001d))
+        {
+            transform.appendRotation(deltax > 0 ? 90d : 270d);
+        }
+        else
+        {
+            transform.appendRotation(90 + Math.toDegrees(Math.atan2(deltay, deltax)));
+        }
+        double halfWidth = this.arrowWidth / 2d;
+        Point2D arrowLeft = transform.transform(new Point2D(-halfWidth, this.arrowLength));
+        Point2D arrowRight = transform.transform(new Point2D(halfWidth, this.arrowLength));
 
-        // Find the angle of the entering vector with (1,0).
-
-        double d = Math.sqrt(dx * dx + dy * dy);
-        double a = dx / d;
-
-        // Compute the coordinates at which the entering vector and the ellipse
-        // cross.
-
-        a = Math.acos(a);
-        dx = Math.cos(a) * w;
-        dy = Math.sin(a) * h;
-
-        // The distance from the ellipse center to the crossing point of the
-        // ellipse and vector:
-
-        return Math.sqrt(dx * dx + dy * dy);
+        g.beginPath();
+        g.moveTo(arrowLeft.getX(), arrowLeft.getY());
+        g.lineTo(arrowCenter.getX(), arrowCenter.getY());
+        g.lineTo(arrowRight.getX(), arrowRight.getY());
+        g.lineTo(arrowLeft.getX(), arrowLeft.getY());
+        g.closePath();
+        if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
+        {
+            g.fill();
+        }
+        if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
+        {
+            g.stroke();
+        }
     }
 }

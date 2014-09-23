@@ -41,8 +41,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
-import org.graphstream.ui.javafx.util.DefaultCamera;
-import org.graphstream.ui.view.Camera;
 
 
 public class NodeRenderer extends ElementRenderer
@@ -55,13 +53,37 @@ public class NodeRenderer extends ElementRenderer
 
 
     @Override
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
+        this.configureSize(group, element);
+    }
 
+
+    @Override
+    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
+    {
+        this.configureSize(group, null);
+        this.pushFillStyle(group, g);
+        this.pushStrokeStyle(group, g);
+    }
+
+
+    @Override
+    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    {
+        GraphicNode node = (GraphicNode) element;
+        this.configureSize(group, element);
+        Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
+        return new CircleContext(node, pos, this.width / 2d, this.height / 2d);
+    }
+
+
+    private void configureSize(final StyleGroup group, final GraphicElement element)
+    {
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
         {
-            final Object s = element.getAttribute("ui.size");
+            final Object s = element != null ? element.getAttribute("ui.size") : null;
             if (s != null)
             {
                 final Value length = StyleConstants.convertValue(s);
@@ -77,32 +99,27 @@ public class NodeRenderer extends ElementRenderer
                 this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
             }
         }
+        else
+        {
+            this.size = group.getSize();
+            this.width = this.size.get(0);
+            this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
+        }
     }
 
 
     @Override
-    protected void pushStyle(StyleGroup group, GraphicsContext g, Camera camera)
-    {
-        this.pushFillStyle(group, g);
-        this.pushStrokeStyle(group, g);
-        this.size = group.getSize();
-        this.width = this.size.get(0);
-        this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
-    }
-
-
-    @Override
-    protected void elementInvisible(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
 
 
     @Override
-    protected void renderElement(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         GraphicNode node = (GraphicNode) element;
-        DefaultCamera camerafx = (DefaultCamera) camera;
+        FxCamera camerafx = camera;
         Point2D pos = camerafx.graphToScreen(new Point2D(node.x, node.y));
         double x = pos.getX() - (this.width / 2d);
         double y = pos.getY() - (this.height / 2d);

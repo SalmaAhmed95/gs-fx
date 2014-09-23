@@ -39,9 +39,7 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
-import org.graphstream.ui.javafx.util.DefaultCamera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
-import org.graphstream.ui.view.Camera;
 
 
 public class SpriteRenderer extends ElementRenderer
@@ -60,7 +58,7 @@ public class SpriteRenderer extends ElementRenderer
 
 
     @Override
-    protected void setupRenderingPass(StyleGroup group, GraphicsContext g, Camera camera)
+    protected void setupRenderingPass(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
         super.setupRenderingPass(group, g, camera);
         this.metrics = camera.getMetrics();
@@ -68,7 +66,7 @@ public class SpriteRenderer extends ElementRenderer
 
 
     @Override
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
 
@@ -84,7 +82,7 @@ public class SpriteRenderer extends ElementRenderer
 
 
     @Override
-    protected void pushStyle(StyleGroup group, GraphicsContext g, Camera camera)
+    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
         this.size = group.getSize();
         this.width = this.metrics.lengthToGu(this.size, 0);
@@ -95,21 +93,28 @@ public class SpriteRenderer extends ElementRenderer
 
 
     @Override
-    protected void elementInvisible(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    {
+        return null;
+    }
+
+
+    @Override
+    protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
 
 
     @Override
-    protected void renderElement(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         final GraphicSprite sprite = (GraphicSprite) element;
 
         Point2D pos = null;
-        if (camera instanceof DefaultCamera)
+        if (camera instanceof FxCamera)
         {
-            pos = ((DefaultCamera) camera).getSpritePosition(sprite, StyleConstants.Units.GU);
+            pos = ((FxCamera) camera).getSpritePosition(sprite, StyleConstants.Units.GU);
         }
         if (null == pos)
         {

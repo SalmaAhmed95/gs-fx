@@ -7,7 +7,7 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupListener;
-import org.graphstream.ui.javafx.renderer.JavafxGraphRenderer;
+import org.graphstream.ui.javafx.renderer.FxGraphRenderer;
 import org.graphstream.ui.swingViewer.GraphRenderer;
 import org.graphstream.ui.view.Camera;
 import org.jfree.fx.FXGraphics2D;
@@ -118,9 +118,9 @@ public class ViewRenderer implements StyleGroupListener
         {
             return;
         }
-        if (this.delegate instanceof JavafxGraphRenderer)
+        if (this.delegate instanceof FxGraphRenderer)
         {
-            final JavafxGraphRenderer fx = (JavafxGraphRenderer) this.delegate;
+            final FxGraphRenderer fx = (FxGraphRenderer) this.delegate;
             fx.render(ctx, x, y, width, height);
         }
         else

@@ -46,10 +46,8 @@ import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
-import org.graphstream.ui.javafx.util.DefaultCamera;
 import org.graphstream.ui.javafx.util.FontCache;
 import org.graphstream.ui.javafx.util.SwingUtils;
-import org.graphstream.ui.view.Camera;
 
 import java.awt.geom.PathIterator;
 
@@ -69,7 +67,7 @@ public abstract class ElementRenderer
     }
 
 
-    public final void render(StyleGroup group, GraphicsContext g, Camera camera)
+    public final void render(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
         setupRenderingPass(group, g, camera);
         pushStyle(group, g, camera);
@@ -131,16 +129,19 @@ public abstract class ElementRenderer
     }
 
 
-    protected abstract void pushStyle(StyleGroup group, GraphicsContext g, Camera camera);
+    protected abstract void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera);
 
 
-    protected abstract void renderElement(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element);
+    protected abstract ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element);
 
 
-    protected abstract void elementInvisible(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element);
+    protected abstract void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element);
 
 
-    protected void setupRenderingPass(StyleGroup group, GraphicsContext g, Camera camera)
+    protected abstract void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element);
+
+
+    protected void setupRenderingPass(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
         this.pushTextStyle(group, g);
         this.pushFillStyle(group, g);
@@ -148,7 +149,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, Camera camera, GraphicElement element)
+    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         Color fill = SwingUtils.fromAwt(group.getFillColor(0));
         if (element != null && StyleConstants.FillMode.DYN_PLAIN.equals(group.getFillMode()))
@@ -254,7 +255,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected final void renderText(final StyleGroup group, final GraphicsContext g, final Camera camera, final GraphicElement element)
+    protected final void renderText(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         if (StyleConstants.TextMode.HIDDEN.equals(group.getTextMode()))
         {
@@ -275,10 +276,10 @@ public abstract class ElementRenderer
         Point2D pos = null;
         GraphicSprite s = null;
 
-        if (element instanceof GraphicSprite && camera instanceof DefaultCamera)
+        if (element instanceof GraphicSprite)
         {
             s = (GraphicSprite) element;
-            pos = ((DefaultCamera) camera).getSpritePosition(s, Units.GU);
+            pos = camera.getSpritePosition(s, Units.GU);
         }
 
         if (pos != null && s.getUnits() == Units.PX)
