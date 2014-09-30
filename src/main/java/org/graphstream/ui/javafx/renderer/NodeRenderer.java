@@ -79,6 +79,32 @@ public class NodeRenderer extends ElementRenderer
     }
 
 
+    @Override
+    protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
+    {
+
+    }
+
+
+    @Override
+    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
+    {
+        GraphicNode node = (GraphicNode) element;
+        Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
+        double x = pos.getX() - (this.width / 2d);
+        double y = pos.getY() - (this.height / 2d);
+        if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
+        {
+            g.fillOval(x, y, this.width, this.height);
+        }
+        if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
+        {
+            g.strokeOval(x, y, this.width, this.height);
+        }
+        this.renderText(group, g, camera, element);
+    }
+
+
     private void configureSize(final StyleGroup group, final GraphicElement element)
     {
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
@@ -105,32 +131,5 @@ public class NodeRenderer extends ElementRenderer
             this.width = this.size.get(0);
             this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
         }
-    }
-
-
-    @Override
-    protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
-    {
-
-    }
-
-
-    @Override
-    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
-    {
-        GraphicNode node = (GraphicNode) element;
-        FxCamera camerafx = camera;
-        Point2D pos = camerafx.graphToScreen(new Point2D(node.x, node.y));
-        double x = pos.getX() - (this.width / 2d);
-        double y = pos.getY() - (this.height / 2d);
-        if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
-        {
-            g.fillOval(x, y, this.width, this.height);
-        }
-        if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
-        {
-            g.strokeOval(x, y, this.width, this.height);
-        }
-        this.renderText(group, g, camera, element);
     }
 }

@@ -43,6 +43,7 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
 
 public class EdgeRenderer extends ElementRenderer
@@ -53,12 +54,14 @@ public class EdgeRenderer extends ElementRenderer
 
     private double arrowWidth = 0;
 
+    private double padding;
+
 
     @Override
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
-
+        this.configurePadding(group);
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
         {
             this.width = camera.getMetrics().lengthToGu(StyleConstants.convertValue(element.getAttribute("ui.size")));
@@ -72,6 +75,7 @@ public class EdgeRenderer extends ElementRenderer
     @Override
     protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
+        this.configurePadding(group);
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
         this.width = group.getSize().get(0);
@@ -112,6 +116,20 @@ public class EdgeRenderer extends ElementRenderer
     }
 
 
+    private void configurePadding(final StyleGroup group)
+    {
+        Values value = group.getPadding();
+        if (null == value)
+        {
+            this.padding = 0d;
+        }
+        else
+        {
+            this.padding = value.get(0);
+        }
+    }
+
+
     private void renderArrow(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicEdge edge)
     {
         if (!edge.isDirected())
@@ -147,7 +165,7 @@ public class EdgeRenderer extends ElementRenderer
         Affine transform = new Affine();
         double deltax = pos1.getX() - pos0.getX();
         double deltay = pos1.getY() - pos0.getY();
-        transform.appendTranslation(arrowCenter.getX(), arrowCenter.getY());
+        transform.appendTranslation(arrowCenter.getX(), arrowCenter.getY() + this.padding);
         if (Approximations.approximatelyEquals(deltay, 0d, 0.00001d))
         {
             transform.appendRotation(deltax > 0 ? 90d : 270d);

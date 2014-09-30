@@ -31,20 +31,16 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
+import com.sun.javafx.tk.Toolkit;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Affine;
 import org.graphstream.graph.Element;
-import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.javafx.util.FontCache;
 import org.graphstream.ui.javafx.util.SwingUtils;
@@ -164,7 +160,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected final void pushTextStyle(final StyleGroup group, final GraphicsContext g)
+    protected void pushTextStyle(final StyleGroup group, final GraphicsContext g)
     {
         String fontName = group.getTextFont();
         StyleConstants.TextStyle textStyle = group.getTextStyle();
@@ -180,7 +176,11 @@ public abstract class ElementRenderer
             this.textColor = Color.BLACK;
         }
 
-        this.textFont = FontCache.defaultFontCache().getFont(fontName, textStyle, this.textSize);
+        this.textFont = null;
+        if (!"default".equalsIgnoreCase(fontName))
+        {
+            this.textFont = FontCache.defaultFontCache().getDefaultFont(textStyle, this.textSize);
+        }
         if (null == this.textFont)
         {
             this.textFont = FontCache.defaultFontCache().getDefaultFont(textStyle, this.textSize);
@@ -190,7 +190,18 @@ public abstract class ElementRenderer
     }
 
 
-    protected final void pushStrokeStyle(final StyleGroup group, final GraphicsContext g)
+    protected void pushFillStyle(final StyleGroup group, final GraphicsContext g)
+    {
+        Color color = SwingUtils.fromAwt(group.getFillColor(0));
+        if (null == color)
+        {
+            color = Color.BLACK;
+        }
+        g.setFill(color);
+    }
+
+
+    protected void pushStrokeStyle(final StyleGroup group, final GraphicsContext g)
     {
         Color stroke = SwingUtils.fromAwt(group.getStrokeColor(0));
         if (null == stroke)
@@ -211,7 +222,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected final void strokeShake(final java.awt.Shape s, final GraphicsContext g)
+    protected void strokeShape(final java.awt.Shape s, final GraphicsContext g)
     {
         final double[] coords = new double[6];
         g.beginPath();
@@ -244,18 +255,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected final void pushFillStyle(final StyleGroup group, final GraphicsContext g)
-    {
-        Color color = SwingUtils.fromAwt(group.getFillColor(0));
-        if (null == color)
-        {
-            color = Color.BLACK;
-        }
-        g.setFill(color);
-    }
-
-
-    protected final void renderText(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
+    protected void renderText(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         if (StyleConstants.TextMode.HIDDEN.equals(group.getTextMode()))
         {
@@ -272,44 +272,45 @@ public abstract class ElementRenderer
             return;
         }
 
-        final Point3 p;
-        Point2D pos = null;
-        GraphicSprite s = null;
+        Point2D pos = camera.graphToScreen(new Point2D(element.getX(), element.getY()));
+        ElementContext context = camera.getElement(element.getId());
+        double x = pos.getX();
+        double y = pos.getY() + this.textSize / 3d;
+        double w = Toolkit.getToolkit().getFontLoader().computeStringWidth(label, this.textFont);
+        double width = context != null ? Math.max(1, context.getBounds().getWidth()) : 0d;
+        double height = context != null ? Math.max(1, context.getBounds().getHeight()) : 0d;
 
-        if (element instanceof GraphicSprite)
+        switch (group.getTextAlignment())
         {
-            s = (GraphicSprite) element;
-            pos = camera.getSpritePosition(s, Units.GU);
+            case CENTER:
+                x += w / 2d;
+                break;
+            case LEFT:
+                x -= w;
+                break;
+            case AT_LEFT:
+                x -= w - width;
+                break;
+            case AT_RIGHT:
+                x += width;
+                break;
+            case UNDER:
+                x -= w / 2d;
+                y += height / 2d + this.textSize;
+                break;
+            case ABOVE:
+                x -= w / 2d;
+                y -= height / 2d - this.textSize;
+                break;
+            case RIGHT:
+            case JUSTIFY:
+            case ALONG:
+            default:
         }
 
-        if (pos != null && s.getUnits() == Units.PX)
-        {
-            double w = camera.getMetrics().lengthToPx(group.getSize(), 0);
-            p = camera.transformGuToPx(pos.getX(), pos.getY(), 0);
-            p.x += w / 2;
-        }
-        else if (pos != null && s != null && s.getUnits() == Units.PERCENTS)
-        {
-            double w = camera.getMetrics().lengthToPx(group.getSize(), 0);
-            p = camera.transformGuToPx(camera.getMetrics().viewport[2] * pos.getX(), camera.getMetrics().viewport[3] * pos.getY(), 0);
-            p.x += (w / 2);
-        }
-        else
-        {
-            double w = camera.getMetrics().lengthToGu(group.getSize(), 0);
-            p = camera.transformGuToPx(element.getX() + (w / 2), element.getY(), 0);
-        }
-
-        Affine pop = g.getTransform();
-        Paint c = g.getStroke();
-
-        g.setStroke(this.textColor);
         g.setFont(this.textFont);
-        g.setTransform(new Affine());
-        g.strokeText(label, p.x, p.y + this.textSize / 3d);
-
-        g.setTransform(pop);
-        g.setStroke(c);
+        g.setFill(this.textColor);
+        g.fillText(label, x, y);
     }
 
 

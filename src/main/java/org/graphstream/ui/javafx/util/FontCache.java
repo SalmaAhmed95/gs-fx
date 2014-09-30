@@ -90,7 +90,7 @@ public class FontCache
 
     public Font getDefaultFont(StyleConstants.TextStyle style, int size)
     {
-        return getFont(this.defaultFont.getName(), style, size);
+        return getFont(this.defaultFont.getFamily(), style, size);
     }
 
 
