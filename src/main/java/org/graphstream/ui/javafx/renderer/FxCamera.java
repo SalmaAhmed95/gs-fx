@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.graphstream.ui.javafx.util.Approximations;
 
 /**
  * Define how the graph is viewed.
@@ -112,19 +113,16 @@ public class FxCamera implements Camera
 
     private final Map<String, ElementContext> elements = new TreeMap<>();
 
-
     public FxCamera(GraphicGraph graph)
     {
         this.graph = graph;
     }
-
 
     @Override
     public Point3 getViewCenter()
     {
         return center;
     }
-
 
     @Override
     public void setViewCenter(double x, double y, double z)
@@ -134,19 +132,16 @@ public class FxCamera implements Camera
         this.graph.graphChanged = true;
     }
 
-
     public void setViewCenter(double x, double y)
     {
         setViewCenter(x, y, 0d);
     }
-
 
     @Override
     public double getViewPercent()
     {
         return zoom;
     }
-
 
     @Override
     public void setViewPercent(double percent)
@@ -156,20 +151,17 @@ public class FxCamera implements Camera
         graph.graphChanged = true;
     }
 
-
     @Override
     public double getViewRotation()
     {
         return rotation;
     }
 
-
     @Override
     public GraphMetrics getMetrics()
     {
         return metrics;
     }
-
 
     @Override
     public String toString()
@@ -184,7 +176,6 @@ public class FxCamera implements Camera
         return builder.toString();
     }
 
-
     @Override
     public void resetView()
     {
@@ -192,13 +183,11 @@ public class FxCamera implements Camera
         setViewRotation(0);
     }
 
-
     @Override
     public void setBounds(double minx, double miny, double minz, double maxx, double maxy, double maxz)
     {
         metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);
     }
-
 
     @Override
     public double getGraphDimension()
@@ -210,7 +199,6 @@ public class FxCamera implements Camera
 
         return this.metrics.diagonal;
     }
-
 
     @Override
     public boolean isVisible(GraphicElement element)
@@ -242,7 +230,6 @@ public class FxCamera implements Camera
         }
     }
 
-
     @Override
     public Point3 transformPxToGu(final double x, final double y)
     {
@@ -253,7 +240,6 @@ public class FxCamera implements Camera
         }
         return new Point3(p.getX(), p.getY(), 0d);
     }
-
 
     @Override
     public Point3 transformGuToPx(double x, double y, double z)
@@ -266,7 +252,6 @@ public class FxCamera implements Camera
         return new Point3(p.getX(), p.getY(), z);
     }
 
-
     public void pushView(final GraphicGraph graph, final GraphicsContext g)
     {
         if (this.autoFit)
@@ -278,7 +263,6 @@ public class FxCamera implements Camera
             userView();
         }
     }
-
 
     public boolean putElement(final ElementContext context)
     {
@@ -302,7 +286,6 @@ public class FxCamera implements Camera
         }
     }
 
-
     public boolean removeElement(final String id)
     {
         if (null == id)
@@ -312,7 +295,6 @@ public class FxCamera implements Camera
         return this.elements.remove(id) != null;
     }
 
-
     public ElementContext getElement(final String id)
     {
         if (null == id)
@@ -321,7 +303,6 @@ public class FxCamera implements Camera
         }
         return this.elements.get(id);
     }
-
 
     public GraphicElement findNodeOrSpriteAt(final GraphicGraph graph, final double x, final double y)
     {
@@ -346,7 +327,6 @@ public class FxCamera implements Camera
         return null;
     }
 
-
     public Collection<GraphicElement> allNodesOrSpritesIn(GraphicGraph graph, double x1, double y1, double x2, double y2)
     {
         List<GraphicElement> elts = new ArrayList<>();
@@ -370,7 +350,6 @@ public class FxCamera implements Camera
         return Collections.unmodifiableList(elts);
     }
 
-
     public Point2D getSpritePosition(GraphicSprite sprite, Units units)
     {
         if (sprite.isAttachedToNode())
@@ -387,12 +366,10 @@ public class FxCamera implements Camera
         }
     }
 
-
     public double[] getGraphViewport()
     {
         return gviewport;
     }
-
 
     @Override
     public void setGraphViewport(double minx, double miny, double maxx, double maxy)
@@ -411,7 +388,6 @@ public class FxCamera implements Camera
         setZoom(1);
     }
 
-
     @Override
     public void removeGraphViewport()
     {
@@ -419,7 +395,6 @@ public class FxCamera implements Camera
         this.gviewport = null;
         this.resetView();
     }
-
 
     private void autoFitView()
     {
@@ -452,11 +427,13 @@ public class FxCamera implements Camera
 
         this.zoom = 1;
         this.center.set(tx, ty, 0);
-        this.metrics.setRatioPx2Gu(scale);
+        if (!Approximations.approximatelyEquals(0, scale, .000001))
+        {
+            this.metrics.setRatioPx2Gu(scale);
+        }
         this.metrics.loVisible.copy(this.metrics.lo);
         this.metrics.hiVisible.copy(this.metrics.hi);
     }
-
 
     private void userView()
     {
@@ -492,7 +469,10 @@ public class FxCamera implements Camera
             logger.log(Level.INFO, "Cannot inverse gu2px matrix.", e);
         }
 
-        this.metrics.setRatioPx2Gu(scale);
+        if (!Approximations.approximatelyEquals(0, scale, .000001))
+        {
+            this.metrics.setRatioPx2Gu(scale);
+        }
 
         double w2 = (this.metrics.viewport[2] / sx) / 2;
         double h2 = (this.metrics.viewport[3] / sx) / 2;
@@ -500,7 +480,6 @@ public class FxCamera implements Camera
         this.metrics.loVisible.set(center.x - w2, center.y - h2);
         this.metrics.hiVisible.set(center.x + w2, center.y + h2);
     }
-
 
     @Override
     public void setAutoFitView(boolean on)
@@ -514,14 +493,12 @@ public class FxCamera implements Camera
         this.autoFit = on;
     }
 
-
     public void setZoom(double z)
     {
         this.zoom = z;
         this.graph.graphChanged = true;
         logger.fine("Zoom value updated to [" + z + "].");
     }
-
 
     @Override
     public void setViewRotation(double theta)
@@ -530,18 +507,15 @@ public class FxCamera implements Camera
         this.graph.graphChanged = true;
     }
 
-
     public void setViewport(double viewportX, double viewportY, double viewportWidth, double viewportHeight)
     {
         this.metrics.setViewport(viewportX, viewportY, viewportWidth, viewportHeight);
     }
 
-
     public void setPadding(GraphicGraph graph)
     {
         this.padding.copy(graph.getStyle().getPadding());
     }
-
 
     public Point2D screenToGraph(final Point2D pos)
     {
@@ -559,7 +533,6 @@ public class FxCamera implements Camera
         }
     }
 
-
     public Point2D graphToScreen(final Point2D pos)
     {
         if (null == pos)
@@ -576,7 +549,6 @@ public class FxCamera implements Camera
         }
     }
 
-
     private double getPaddingXgu()
     {
         if (padding.units == Units.GU && padding.size() > 0)
@@ -586,7 +558,6 @@ public class FxCamera implements Camera
         return 0;
     }
 
-
     private double getPaddingYgu()
     {
         if (padding.units == Units.GU && padding.size() > 1)
@@ -595,7 +566,6 @@ public class FxCamera implements Camera
         }
         return getPaddingXgu();
     }
-
 
     private double getPaddingXpx()
     {
@@ -609,7 +579,6 @@ public class FxCamera implements Camera
         }
     }
 
-
     private double getPaddingYpx()
     {
         if (Units.PX.equals(this.padding.units) && this.padding.size() > 0)
@@ -622,24 +591,21 @@ public class FxCamera implements Camera
         }
     }
 
-
     private boolean isSpriteVisible(GraphicSprite sprite)
     {
         return isSpriteIn(sprite,
-            this.metrics.getViewportX(), this.metrics.getViewportY(),
-            this.metrics.getViewportX() + this.metrics.getViewportWidth(),
-            this.metrics.getViewportY() + this.metrics.getViewportHeight());
+                this.metrics.getViewportX(), this.metrics.getViewportY(),
+                this.metrics.getViewportX() + this.metrics.getViewportWidth(),
+                this.metrics.getViewportY() + this.metrics.getViewportHeight());
     }
-
 
     private boolean isNodeVisible(GraphicNode node)
     {
         return isNodeIn(node,
-            this.metrics.getViewportX(), this.metrics.getViewportY(),
-            this.metrics.getViewportX() + this.metrics.getViewportWidth(),
-            this.metrics.getViewportY() + this.metrics.getViewportHeight());
+                this.metrics.getViewportX(), this.metrics.getViewportY(),
+                this.metrics.getViewportX() + this.metrics.getViewportWidth(),
+                this.metrics.getViewportY() + this.metrics.getViewportHeight());
     }
-
 
     private boolean isEdgeVisible(GraphicEdge edge)
     {
@@ -663,7 +629,6 @@ public class FxCamera implements Camera
 
         return true;
     }
-
 
     private boolean isNodeIn(GraphicNode node, double X1, double Y1, double X2, double Y2)
     {
@@ -698,7 +663,6 @@ public class FxCamera implements Camera
 
         return vis;
     }
-
 
     private boolean isSpriteIn(final GraphicSprite sprite, final double X1, final double Y1, final double X2, final double Y2)
     {
@@ -746,12 +710,10 @@ public class FxCamera implements Camera
         return true;
     }
 
-
     private Point2D spritePositionPx(GraphicSprite sprite)
     {
         return getSpritePosition(sprite, Units.PX);
     }
-
 
     private boolean nodeContains(GraphicElement elt, double x, double y)
     {
@@ -788,12 +750,10 @@ public class FxCamera implements Camera
         return true;
     }
 
-
     private boolean edgeContains(GraphicElement elt, double x, double y)
     {
         return false;
     }
-
 
     private boolean spriteContains(final GraphicElement elt, final double x, final double y)
     {
@@ -831,12 +791,11 @@ public class FxCamera implements Camera
         return true;
     }
 
-
     /**
      * Compute the position of a sprite if it is not attached.
      *
      * @param sprite The sprite.
-     * @param units  The units the computed position must be given into.
+     * @param units The units the computed position must be given into.
      * @return The same instance as pos, or a new one if pos was null.
      */
     private Point2D getSpritePositionFree(GraphicSprite sprite, Units units)
@@ -873,12 +832,11 @@ public class FxCamera implements Camera
         return null;
     }
 
-
     /**
      * Compute the position of a sprite if attached to a node.
      *
      * @param sprite The sprite.
-     * @param units  The units the computed position must be given into.
+     * @param units The units the computed position must be given into.
      * @return The same instance as pos, or a new one if pos was null.
      */
     private Point2D getSpritePositionNode(GraphicSprite sprite, Units units)
@@ -901,12 +859,11 @@ public class FxCamera implements Camera
         }
     }
 
-
     /**
      * Compute the position of a sprite if attached to an edge.
      *
      * @param sprite The sprite.
-     * @param units  The units the computed position must be given into.
+     * @param units The units the computed position must be given into.
      * @return The same instance as pos, or a new one if pos was null.
      */
     private Point2D getSpritePositionEdge(GraphicSprite sprite, Units units)

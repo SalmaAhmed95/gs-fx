@@ -10,8 +10,7 @@ import java.util.logging.Logger;
 /**
  * a javafx view animation timer
  * <p>
- * User: bowen
- * Date: 8/10/14
+ * User: bowen Date: 8/10/14
  */
 public class ViewTimer extends AnimationTimer
 {
@@ -21,10 +20,7 @@ public class ViewTimer extends AnimationTimer
 
     private final AtomicBoolean active = new AtomicBoolean(false);
 
-    private final Object sync = new Object();
-
     private final ViewRenderer renderer;
-
 
     ViewTimer(final ViewRenderer renderer)
     {
@@ -35,13 +31,11 @@ public class ViewTimer extends AnimationTimer
         this.renderer = renderer;
     }
 
-
     public void repaint()
     {
         this.dirty.getAndSet(true);
         this.ensureActive();
     }
-
 
     private void ensureActive()
     {
@@ -52,7 +46,6 @@ public class ViewTimer extends AnimationTimer
         this.start();
     }
 
-
     @Override
     public void start()
     {
@@ -60,14 +53,12 @@ public class ViewTimer extends AnimationTimer
         super.start();
     }
 
-
     @Override
     public void stop()
     {
         this.active.getAndSet(false);
         super.stop();
     }
-
 
     @Override
     public void handle(final long l)
@@ -86,11 +77,15 @@ public class ViewTimer extends AnimationTimer
         }
     }
 
-
     private void render()
     {
+        // ensure we are active
         final Canvas view = this.renderer.getCanvas();
         if (null == view)
+        {
+            return;
+        }
+        if (!this.active.get())
         {
             return;
         }
@@ -99,14 +94,11 @@ public class ViewTimer extends AnimationTimer
         this.dirty.getAndSet(false);
 
         // render graph
-        synchronized (this.sync)
-        {
-            final double x = view.getLayoutX();
-            final double y = view.getLayoutY();
-            final double w = Math.max(0, view.getWidth());
-            final double h = Math.max(0, view.getHeight());
-            this.renderer.render(view.getGraphicsContext2D(), x, y, w, h);
-        }
+        final double x = view.getLayoutX();
+        final double y = view.getLayoutY();
+        final double w = Math.max(0, view.getWidth());
+        final double h = Math.max(0, view.getHeight());
+        this.renderer.render(view.getGraphicsContext2D(), x, y, w, h);
 
         // if we haven't been set to repaint we can stop
         if (!this.dirty.get())
