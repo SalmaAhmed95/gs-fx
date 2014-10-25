@@ -10,17 +10,14 @@ import javafx.scene.paint.Color;
 import javax.swing.JLabel;
 import java.awt.Component;
 
-
 /**
  * common swing utilities
  * <p>
- * User: bowen
- * Date: 8/3/14
+ * User: bowen Date: 8/3/14
  */
 public class SwingUtils
 {
     private static final Component empty = new JLabel();
-
 
     public static Color fromAwt(final java.awt.Color color)
     {
@@ -37,7 +34,6 @@ public class SwingUtils
             return Color.color(color.getRed() / 255d, color.getGreen() / 255d, color.getBlue() / 255d, color.getAlpha() / 255d);
         }
     }
-
 
     public static java.awt.event.MouseEvent toAwt(final MouseEvent event)
     {
@@ -104,10 +100,14 @@ public class SwingUtils
         final int x = (int) event.getX();
         final int y = (int) event.getY();
         final int count = event.getClickCount();
-        final boolean popup = event.isPopupTrigger();
+        boolean popup = event.isPopupTrigger();
+        if (MouseEvent.MOUSE_CLICKED.equals(type) && event.isMetaDown())
+        {
+            // mack books use meta flag for right-clicks
+            popup = true;
+        }
         return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, count, popup, button);
     }
-
 
     public static java.awt.event.KeyEvent toAwt(final KeyEvent event)
     {
@@ -143,7 +143,6 @@ public class SwingUtils
         return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
     }
 
-
     public static java.awt.event.KeyEvent toAwt(final ScrollEvent event)
     {
         final EventType type = event.getEventType();
@@ -167,7 +166,6 @@ public class SwingUtils
         final char keyChar = ' ';
         return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
     }
-
 
     private static int keyCode(final KeyEvent event)
     {
@@ -195,7 +193,6 @@ public class SwingUtils
                 return 0;
         }
     }
-
 
     private static int modifiers(final InputEvent event)
     {
@@ -263,7 +260,6 @@ public class SwingUtils
 
         return 0;
     }
-
 
     private SwingUtils()
     {
