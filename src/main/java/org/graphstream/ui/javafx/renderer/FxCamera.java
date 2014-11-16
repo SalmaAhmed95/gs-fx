@@ -47,6 +47,7 @@ import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.javafx.util.Approximations;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.util.CubicCurve;
@@ -59,7 +60,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.graphstream.ui.javafx.util.Approximations;
 
 /**
  * Define how the graph is viewed.
@@ -422,7 +422,7 @@ public class FxCamera implements Camera
         }
         catch (final NonInvertibleTransformException e)
         {
-            logger.log(Level.INFO, "Cannot inverse gu2px matrix.", e);
+            logger.log(Level.FINE, "Cannot inverse gu2px matrix.", e);
         }
 
         this.zoom = 1;

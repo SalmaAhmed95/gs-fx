@@ -77,11 +77,11 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 
     private FxCamera camera = null;
 
-    private NodeRenderer nodeRenderer = new NodeRenderer();
+    private final NodeRenderer nodeRenderer = new NodeRenderer();
 
-    private EdgeRenderer edgeRenderer = new EdgeRenderer();
+    private final EdgeRenderer edgeRenderer = new EdgeRenderer();
 
-    private SpriteRenderer spriteRenderer = new SpriteRenderer();
+    private final SpriteRenderer spriteRenderer = new SpriteRenderer();
 
     private LayerRenderer backRenderer = null;
 
@@ -270,6 +270,10 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 
     private void beginFrame()
     {
+        this.nodeRenderer.clear();
+        this.edgeRenderer.clear();
+        this.spriteRenderer.clear();
+
         if (!this.graph.hasLabel("ui.log"))
         {
             return;
@@ -316,13 +320,13 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 
     private void renderGraph(final GraphicsContext g)
     {
-        g.setTransform(new Affine());
-        this.renderGraphBackground(g);
-        this.renderBackLayer(new FXGraphics2D(g));
         try
         {
             this.camera.pushView(this.graph, g);
             this.computeGraphElements();
+            g.setTransform(new Affine());
+            this.renderGraphBackground(g);
+            this.renderBackLayer(new FXGraphics2D(g));
             this.renderGraphElements(g);
             StyleGroup style = this.graph.getStyle();
             if (!StyleConstants.StrokeMode.NONE.equals(style.getStrokeMode()) && style.getStrokeWidth().value > 0)
@@ -334,12 +338,12 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
                 g.setLineWidth(metrics.lengthToGu(stroke));
                 g.strokeRect(metrics.lo.x, metrics.lo.y + px1, metrics.size.data[0] - px1, metrics.size.data[1] - px1);
             }
+            this.renderForeLayer(new FXGraphics2D(g));
         }
         catch (final Exception e)
         {
             logger.log(Level.WARNING, "Unexpected error during graph rendering.", e);
         }
-        renderForeLayer(new FXGraphics2D(g));
     }
 
 
@@ -423,7 +427,7 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
         {
             return;
         }
-        for (final Collection<StyleGroup> groups : sgs.zIndex())
+        for (final Iterable<StyleGroup> groups : sgs.zIndex())
         {
             for (final StyleGroup group : groups)
             {

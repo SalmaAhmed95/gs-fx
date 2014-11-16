@@ -9,6 +9,7 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupListener;
 import org.graphstream.ui.javafx.renderer.FxGraphRenderer;
 import org.graphstream.ui.swingViewer.GraphRenderer;
+import org.graphstream.ui.swingViewer.LayerRenderer;
 import org.graphstream.ui.view.Camera;
 import org.jfree.fx.FXGraphics2D;
 
@@ -145,6 +146,20 @@ public class ViewRenderer implements StyleGroupListener
     public void endSelectionAt(double x2, double y2)
     {
         this.delegate.endSelectionAt(x2, y2);
+    }
+
+
+    public void setBackLayerRenderer(final LayerRenderer renderer)
+    {
+        this.delegate.setBackLayerRenderer(renderer);
+        this.repaint();
+    }
+
+
+    public void setForeLayoutRenderer(final LayerRenderer renderer)
+    {
+        this.delegate.setForeLayoutRenderer(renderer);
+        this.repaint();
     }
 
 

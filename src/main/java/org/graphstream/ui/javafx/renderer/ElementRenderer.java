@@ -63,15 +63,20 @@ public abstract class ElementRenderer
     }
 
 
-    public final void render(StyleGroup group, GraphicsContext g, FxCamera camera)
+    public void clear()
+    {
+
+    }
+
+
+    public final void render(final StyleGroup group, final GraphicsContext g, final FxCamera camera)
     {
         setupRenderingPass(group, g, camera);
         pushStyle(group, g, camera);
 
-        for (Element e : group.bulkElements())
+        for (final Element e : group.bulkElements())
         {
-            GraphicElement ge = (GraphicElement) e;
-
+            final GraphicElement ge = (GraphicElement) e;
             if (camera.isVisible(ge))
             {
                 renderElement(group, g, camera, ge);
@@ -84,10 +89,9 @@ public abstract class ElementRenderer
 
         if (group.hasDynamicElements())
         {
-            for (Element e : group.dynamicElements())
+            for (final Element e : group.dynamicElements())
             {
-                GraphicElement ge = (GraphicElement) e;
-
+                final GraphicElement ge = (GraphicElement) e;
                 if (camera.isVisible(ge))
                 {
                     if (!group.elementHasEvents(ge))
@@ -105,10 +109,9 @@ public abstract class ElementRenderer
 
         if (group.hasEventElements())
         {
-            for (ElementEvents event : group.elementsEvents())
+            for (final ElementEvents event : group.elementsEvents())
             {
-                GraphicElement ge = (GraphicElement) event.getElement();
-
+                final GraphicElement ge = (GraphicElement) event.getElement();
                 if (camera.isVisible(ge))
                 {
                     event.activate();

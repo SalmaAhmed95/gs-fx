@@ -46,6 +46,9 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class EdgeRenderer extends ElementRenderer
 {
     private double width = 1;
@@ -55,6 +58,16 @@ public class EdgeRenderer extends ElementRenderer
     private double arrowWidth = 0;
 
     private double padding;
+
+    private final Set<String> renderedEdges = new HashSet<>();
+
+
+    @Override
+    public void clear()
+    {
+        super.clear();
+        this.renderedEdges.clear();
+    }
 
 
     @Override
@@ -99,20 +112,58 @@ public class EdgeRenderer extends ElementRenderer
 
 
     @Override
-    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
+    protected void renderElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
-        GraphicEdge edge = (GraphicEdge) element;
-        ElementContext node0 = camera.getElement(edge.getNode0().getId());
-        ElementContext node1 = camera.getElement(edge.getNode1().getId());
+        final GraphicEdge edge = (GraphicEdge) element;
+        final ElementContext node0 = camera.getElement(edge.getNode0().getId());
+        final ElementContext node1 = camera.getElement(edge.getNode1().getId());
         if (null == node0 || null == node1)
         {
             return;
         }
-        Point2D pos0 = node0.getPosition();
-        Point2D pos1 = node1.getPosition();
+
+        final String id = edge.getId();
+        if (this.renderedEdges.contains(id))
+        {
+            return;
+        }
+
+        // render line
+        final GraphicEdge.EdgeGroup edgeGroup = edge.getGroup();
+        final Point2D pos0 = node0.getPosition();
+        final Point2D pos1 = node1.getPosition();
         g.strokeLine(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
-        renderArrow(group, g, camera, edge);
+
+        // render arrow
+        if (edge.isDirected())
+        {
+            renderArrow(group, g, camera, edge);
+        }
+        if (edgeGroup != null)
+        {
+            // render other side arrow (if applicable)
+            for (final GraphicEdge otherEdge : edgeGroup.getEdges())
+            {
+                if (otherEdge.isDirected() && !this.renderedEdges.contains(otherEdge.getId()) && edge.getNode0() != otherEdge.getNode0())
+                {
+                    renderArrow(group, g, camera, otherEdge);
+                    break;
+                }
+            }
+        }
+
+        // render text
         renderText(group, g, camera, element);
+
+        // keep track of rendered edges
+        if (edgeGroup != null)
+        {
+            for (final GraphicEdge otherEdge : edgeGroup.getEdges())
+            {
+                this.renderedEdges.add(otherEdge.getId());
+            }
+        }
+        this.renderedEdges.add(id);
     }
 
 

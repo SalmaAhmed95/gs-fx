@@ -13,6 +13,7 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.javafx.util.SwingUtils;
 import org.graphstream.ui.swingViewer.GraphRenderer;
+import org.graphstream.ui.swingViewer.LayerRenderer;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
@@ -257,6 +258,24 @@ public class ViewNode extends Canvas implements View
         }
         manager.init(this.graph, this);
         this.shortcuts = manager;
+    }
+
+
+    public void repaint()
+    {
+        this.renderer.repaint();
+    }
+
+
+    public void setBackLayerRenderer(final LayerRenderer renderer)
+    {
+        this.renderer.setBackLayerRenderer(renderer);
+    }
+
+
+    public void setForeLayoutRenderer(final LayerRenderer renderer)
+    {
+        this.renderer.setForeLayoutRenderer(renderer);
     }
 
 
