@@ -22,6 +22,7 @@ public class ViewTimer extends AnimationTimer
 
     private final ViewRenderer renderer;
 
+
     ViewTimer(final ViewRenderer renderer)
     {
         if (null == renderer)
@@ -31,11 +32,13 @@ public class ViewTimer extends AnimationTimer
         this.renderer = renderer;
     }
 
+
     public void repaint()
     {
         this.dirty.getAndSet(true);
         this.ensureActive();
     }
+
 
     private void ensureActive()
     {
@@ -46,6 +49,7 @@ public class ViewTimer extends AnimationTimer
         this.start();
     }
 
+
     @Override
     public void start()
     {
@@ -53,12 +57,14 @@ public class ViewTimer extends AnimationTimer
         super.start();
     }
 
+
     @Override
     public void stop()
     {
         this.active.getAndSet(false);
         super.stop();
     }
+
 
     @Override
     public void handle(final long l)
@@ -69,13 +75,14 @@ public class ViewTimer extends AnimationTimer
         }
         catch (final Exception e)
         {
-            logger.log(Level.WARNING, "Unable to render javafx frame.", e);
+            logger.log(Level.WARNING, "Unable to render graph frame.", e);
         }
         if (logger.isLoggable(Level.FINE))
         {
             logger.fine("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
         }
     }
+
 
     private void render()
     {

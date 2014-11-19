@@ -213,18 +213,24 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
         }
 
         this.beginFrame();
-        if (this.camera.getGraphViewport() == null && this.camera.getMetrics().diagonal == 0 && (this.graph.getNodeCount() == 0 && this.graph.getSpriteCount() == 0))
+        try
         {
-            displayNothingToDo(g, width, height);
+            if (this.camera.getGraphViewport() == null && this.camera.getMetrics().diagonal == 0 && (this.graph.getNodeCount() == 0 && this.graph.getSpriteCount() == 0))
+            {
+                displayNothingToDo(g, width, height);
+            }
+            else
+            {
+                this.camera.setPadding(this.graph);
+                this.camera.setViewport(x, y, width, height);
+                this.renderGraph(g);
+                this.renderSelection(g);
+            }
         }
-        else
+        finally
         {
-            this.camera.setPadding(this.graph);
-            this.camera.setViewport(x, y, width, height);
-            this.renderGraph(g);
-            this.renderSelection(g);
+            this.endFrame();
         }
-        this.endFrame();
     }
 
 
@@ -320,30 +326,23 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 
     private void renderGraph(final GraphicsContext g)
     {
-        try
+        this.camera.pushView(this.graph, g);
+        this.computeGraphElements();
+        g.setTransform(new Affine());
+        this.renderGraphBackground(g);
+        this.renderBackLayer(new FXGraphics2D(g));
+        this.renderGraphElements(g);
+        StyleGroup style = this.graph.getStyle();
+        if (!StyleConstants.StrokeMode.NONE.equals(style.getStrokeMode()) && style.getStrokeWidth().value > 0)
         {
-            this.camera.pushView(this.graph, g);
-            this.computeGraphElements();
-            g.setTransform(new Affine());
-            this.renderGraphBackground(g);
-            this.renderBackLayer(new FXGraphics2D(g));
-            this.renderGraphElements(g);
-            StyleGroup style = this.graph.getStyle();
-            if (!StyleConstants.StrokeMode.NONE.equals(style.getStrokeMode()) && style.getStrokeWidth().value > 0)
-            {
-                GraphMetrics metrics = this.camera.getMetrics();
-                double px1 = metrics.px1;
-                Value stroke = style.getShadowWidth();
-                g.setStroke(SwingUtils.fromAwt(this.graph.getStyle().getStrokeColor(0)));
-                g.setLineWidth(metrics.lengthToGu(stroke));
-                g.strokeRect(metrics.lo.x, metrics.lo.y + px1, metrics.size.data[0] - px1, metrics.size.data[1] - px1);
-            }
-            this.renderForeLayer(new FXGraphics2D(g));
+            GraphMetrics metrics = this.camera.getMetrics();
+            double px1 = metrics.px1;
+            Value stroke = style.getShadowWidth();
+            g.setStroke(SwingUtils.fromAwt(this.graph.getStyle().getStrokeColor(0)));
+            g.setLineWidth(metrics.lengthToGu(stroke));
+            g.strokeRect(metrics.lo.x, metrics.lo.y + px1, metrics.size.data[0] - px1, metrics.size.data[1] - px1);
         }
-        catch (final Exception e)
-        {
-            logger.log(Level.WARNING, "Unexpected error during graph rendering.", e);
-        }
+        this.renderForeLayer(new FXGraphics2D(g));
     }
 
 
