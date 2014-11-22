@@ -18,8 +18,7 @@ import java.util.Collection;
 /**
  * a javafx graph renderer
  * <p>
- * User: bowen
- * Date: 7/29/14
+ * User: bowen Date: 7/29/14
  */
 public class ViewRenderer implements StyleGroupListener
 {
@@ -31,7 +30,6 @@ public class ViewRenderer implements StyleGroupListener
 
     private final ViewTimer timer;
 
-
     public ViewRenderer(final GraphRenderer delegate)
     {
         if (null == delegate)
@@ -42,12 +40,10 @@ public class ViewRenderer implements StyleGroupListener
         this.timer = new ViewTimer(this);
     }
 
-
     public Canvas getCanvas()
     {
         return this.canvas;
     }
-
 
     public void open(final GraphicGraph graph, final Canvas canvas)
     {
@@ -65,7 +61,6 @@ public class ViewRenderer implements StyleGroupListener
         this.canvas = canvas;
     }
 
-
     public void close()
     {
         if (this.graph != null)
@@ -78,36 +73,30 @@ public class ViewRenderer implements StyleGroupListener
         this.canvas = null;
     }
 
-
     public void repaint()
     {
         this.timer.repaint();
     }
-
 
     public Camera getCamera()
     {
         return this.delegate.getCamera();
     }
 
-
     public Collection<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2)
     {
         return this.delegate.allNodesOrSpritesIn(x1, y1, x2, y2);
     }
-
 
     public GraphicElement findNodeOrSpriteAt(double x, double y)
     {
         return this.delegate.findNodeOrSpriteAt(x, y);
     }
 
-
     public void moveElementAtPx(GraphicElement element, double x, double y)
     {
         this.delegate.moveElementAtPx(element, x, y);
     }
-
 
     public void render(final GraphicsContext ctx, final double x, final double y, final double width, final double height)
     {
@@ -130,24 +119,20 @@ public class ViewRenderer implements StyleGroupListener
         }
     }
 
-
     public void beginSelectionAt(double x1, double y1)
     {
         this.delegate.beginSelectionAt(x1, y1);
     }
-
 
     public void selectionGrowsAt(double x, double y)
     {
         this.delegate.selectionGrowsAt(x, y);
     }
 
-
     public void endSelectionAt(double x2, double y2)
     {
         this.delegate.endSelectionAt(x2, y2);
     }
-
 
     public void setBackLayerRenderer(final LayerRenderer renderer)
     {
@@ -155,13 +140,11 @@ public class ViewRenderer implements StyleGroupListener
         this.repaint();
     }
 
-
     public void setForeLayoutRenderer(final LayerRenderer renderer)
     {
         this.delegate.setForeLayoutRenderer(renderer);
         this.repaint();
     }
-
 
     @Override
     public void elementStyleChanged(Element element, StyleGroup oldStyle, StyleGroup style)

@@ -31,6 +31,14 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.transform.Affine;
@@ -44,6 +52,7 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
+import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
@@ -51,15 +60,6 @@ import org.graphstream.ui.javafx.util.Approximations;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.util.CubicCurve;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Define how the graph is viewed.
@@ -203,11 +203,22 @@ public class FxCamera implements Camera
     @Override
     public boolean isVisible(GraphicElement element)
     {
+        if (null == element)
+        {
+            return false;
+        }
+
         if (element.hidden)
         {
             return false;
         }
-        if (StyleConstants.VisibilityMode.HIDDEN.equals(element.style.getVisibilityMode()))
+
+        final StyleGroup style = element.getStyle();
+        if (null == style)
+        {
+            return false;
+        }
+        if (StyleConstants.VisibilityMode.HIDDEN.equals(style.getVisibilityMode()))
         {
             return false;
         }

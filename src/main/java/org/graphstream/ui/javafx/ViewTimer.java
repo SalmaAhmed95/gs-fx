@@ -1,11 +1,10 @@
 package org.graphstream.ui.javafx;
 
-import javafx.animation.AnimationTimer;
-import javafx.scene.canvas.Canvas;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.AnimationTimer;
+import javafx.scene.canvas.Canvas;
 
 /**
  * a javafx view animation timer
@@ -22,7 +21,6 @@ public class ViewTimer extends AnimationTimer
 
     private final ViewRenderer renderer;
 
-
     ViewTimer(final ViewRenderer renderer)
     {
         if (null == renderer)
@@ -32,13 +30,11 @@ public class ViewTimer extends AnimationTimer
         this.renderer = renderer;
     }
 
-
     public void repaint()
     {
         this.dirty.getAndSet(true);
         this.ensureActive();
     }
-
 
     private void ensureActive()
     {
@@ -49,7 +45,6 @@ public class ViewTimer extends AnimationTimer
         this.start();
     }
 
-
     @Override
     public void start()
     {
@@ -57,14 +52,12 @@ public class ViewTimer extends AnimationTimer
         super.start();
     }
 
-
     @Override
     public void stop()
     {
         this.active.getAndSet(false);
         super.stop();
     }
-
 
     @Override
     public void handle(final long l)
@@ -83,8 +76,7 @@ public class ViewTimer extends AnimationTimer
         }
     }
 
-
-    private void render()
+    private void render() throws Exception
     {
         // ensure we are active
         final Canvas view = this.renderer.getCanvas();
