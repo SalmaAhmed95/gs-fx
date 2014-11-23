@@ -32,8 +32,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * a javafx graph view
  * <p>
- * User: bowen
- * Date: 8/2/14
+ * User: bowen Date: 8/2/14
  */
 public class ViewNode extends Canvas implements View
 {
@@ -55,18 +54,15 @@ public class ViewNode extends Canvas implements View
 
     private MouseManager mouseClicks;
 
-
     public ViewNode(final Viewer viewer)
     {
         this(viewer, Viewer.newGraphRenderer());
     }
 
-
     public ViewNode(final Viewer viewer, final GraphRenderer delegate)
     {
         this(UUID.randomUUID().toString(), viewer, delegate);
     }
-
 
     public ViewNode(final String identifier, final Viewer viewer, final GraphRenderer delegate)
     {
@@ -98,12 +94,10 @@ public class ViewNode extends Canvas implements View
         }
     }
 
-
     public Application openInApplication()
     {
         return new ApplicationLauncher(this);
     }
-
 
     @Override
     public boolean isResizable()
@@ -111,13 +105,11 @@ public class ViewNode extends Canvas implements View
         return true;
     }
 
-
     @Override
     public double prefWidth(double height)
     {
         return this.getWidth();
     }
-
 
     @Override
     public double prefHeight(double width)
@@ -125,20 +117,17 @@ public class ViewNode extends Canvas implements View
         return this.getHeight();
     }
 
-
     @Override
     public Camera getCamera()
     {
         return this.renderer.getCamera();
     }
 
-
     @Override
     public void display(final GraphicGraph graph, final boolean graphChanged)
     {
         this.renderer.repaint();
     }
-
 
     @Override
     public void close(final GraphicGraph graph)
@@ -161,14 +150,12 @@ public class ViewNode extends Canvas implements View
         }
     }
 
-
     @Override
     public void beginSelectionAt(double x1, double y1)
     {
         this.renderer.beginSelectionAt(x1, y1);
         this.renderer.repaint();
     }
-
 
     @Override
     public void selectionGrowsAt(double x, double y)
@@ -177,7 +164,6 @@ public class ViewNode extends Canvas implements View
         this.renderer.repaint();
     }
 
-
     @Override
     public void endSelectionAt(double x2, double y2)
     {
@@ -185,20 +171,17 @@ public class ViewNode extends Canvas implements View
         this.renderer.repaint();
     }
 
-
     @Override
     public Collection<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2)
     {
         return this.renderer.allNodesOrSpritesIn(x1, y1, x2, y2);
     }
 
-
     @Override
     public GraphicElement findNodeOrSpriteAt(double x, double y)
     {
         return this.renderer.findNodeOrSpriteAt(x, y);
     }
-
 
     @Override
     public void moveElementAtPx(final GraphicElement element, final double x, final double y)
@@ -213,7 +196,6 @@ public class ViewNode extends Canvas implements View
         this.graph.feedbackXYZ(on);
     }
 
-
     @Override
     public void freezeElement(final GraphicElement element, final boolean frozen)
     {
@@ -226,7 +208,6 @@ public class ViewNode extends Canvas implements View
             element.removeAttribute("layout.frozen");
         }
     }
-
 
     @Override
     public void setMouseManager(final MouseManager manager)
@@ -244,7 +225,6 @@ public class ViewNode extends Canvas implements View
         this.mouseClicks = manager;
     }
 
-
     @Override
     public void setShortcutManager(ShortcutManager manager)
     {
@@ -260,24 +240,20 @@ public class ViewNode extends Canvas implements View
         this.shortcuts = manager;
     }
 
-
     public void repaint()
     {
         this.renderer.repaint();
     }
-
 
     public void setBackLayerRenderer(final LayerRenderer renderer)
     {
         this.renderer.setBackLayerRenderer(renderer);
     }
 
-
     public void setForeLayoutRenderer(final LayerRenderer renderer)
     {
         this.renderer.setForeLayoutRenderer(renderer);
     }
-
 
     @Override
     public void addKeyListener(KeyListener l)
@@ -289,7 +265,6 @@ public class ViewNode extends Canvas implements View
         this.keyListeners.add(l);
     }
 
-
     @Override
     public void removeKeyListener(KeyListener l)
     {
@@ -299,7 +274,6 @@ public class ViewNode extends Canvas implements View
         }
         this.keyListeners.remove(l);
     }
-
 
     @Override
     public void addMouseListener(MouseListener l)
@@ -311,7 +285,6 @@ public class ViewNode extends Canvas implements View
         this.mouseListeners.add(l);
     }
 
-
     @Override
     public void removeMouseListener(MouseListener l)
     {
@@ -321,7 +294,6 @@ public class ViewNode extends Canvas implements View
         }
         this.mouseListeners.remove(l);
     }
-
 
     @Override
     public void addMouseMotionListener(MouseMotionListener l)
@@ -333,7 +305,6 @@ public class ViewNode extends Canvas implements View
         this.motionListeners.add(l);
     }
 
-
     @Override
     public void removeMouseMotionListener(MouseMotionListener l)
     {
@@ -344,63 +315,85 @@ public class ViewNode extends Canvas implements View
         this.motionListeners.remove(l);
     }
 
-
     private void wireEvents()
     {
         this.widthProperty().addListener(evt -> renderer.repaint());
         this.heightProperty().addListener(evt -> renderer.repaint());
 
-        this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+        this.addEventHandler(KeyEvent.KEY_PRESSED, event ->
+        {
+            System.out.println("Key pressed (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 keyListeners.forEach(l -> l.keyPressed(awt));
             }
+            if (event.getCode().isArrowKey())
+            {
+                event.consume();
+            }
         });
-        this.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
+        this.addEventHandler(KeyEvent.KEY_RELEASED, event ->
+        {
+            System.out.println("Key released (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 keyListeners.forEach(l -> l.keyReleased(awt));
             }
+            if (event.getCode().isArrowKey())
+            {
+                event.consume();
+            }
         });
-        this.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+        this.addEventHandler(KeyEvent.KEY_TYPED, event ->
+        {
+            System.out.println("Key typed (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 keyListeners.forEach(l -> l.keyTyped(awt));
             }
+            if (event.getCode().isArrowKey())
+            {
+                event.consume();
+            }
         });
 
-        this.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_CLICKED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 mouseListeners.forEach(l -> l.mouseClicked(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_PRESSED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 mouseListeners.forEach(l -> l.mousePressed(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_RELEASED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 mouseListeners.forEach(l -> l.mouseReleased(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_ENTERED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 mouseListeners.forEach(l -> l.mouseEntered(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_EXITED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
@@ -408,14 +401,16 @@ public class ViewNode extends Canvas implements View
             }
         });
 
-        this.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_DRAGGED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
                 motionListeners.forEach(l -> l.mouseDragged(awt));
             }
         });
-        this.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+        this.addEventHandler(MouseEvent.MOUSE_MOVED, event ->
+        {
             final java.awt.event.MouseEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
@@ -423,7 +418,8 @@ public class ViewNode extends Canvas implements View
             }
         });
 
-        this.addEventFilter(ScrollEvent.SCROLL, event -> {
+        this.addEventFilter(ScrollEvent.SCROLL, event ->
+        {
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
@@ -432,18 +428,15 @@ public class ViewNode extends Canvas implements View
         });
     }
 
-
     private static class ApplicationLauncher extends Application
     {
         private ViewNode canvas;
-
 
         private ApplicationLauncher(ViewNode canvas)
         {
             super();
             this.canvas = canvas;
         }
-
 
         @Override
         public void start(final Stage stage) throws Exception
@@ -454,7 +447,6 @@ public class ViewNode extends Canvas implements View
             stage.setScene(new Scene(root, defaultWidth, defaultHeight));
             stage.show();
         }
-
 
         @Override
         public void stop()
