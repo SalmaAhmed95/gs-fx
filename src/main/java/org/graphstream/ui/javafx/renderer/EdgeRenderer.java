@@ -31,6 +31,8 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
+import java.util.Set;
+import java.util.TreeSet;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.shape.StrokeLineCap;
@@ -46,9 +48,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class EdgeRenderer extends ElementRenderer
 {
     private double width = 1;
@@ -59,8 +58,7 @@ public class EdgeRenderer extends ElementRenderer
 
     private double padding;
 
-    private final Set<String> renderedEdges = new HashSet<>();
-
+    private final Set<String> renderedEdges = new TreeSet<>();
 
     @Override
     public void clear()
@@ -68,7 +66,6 @@ public class EdgeRenderer extends ElementRenderer
         super.clear();
         this.renderedEdges.clear();
     }
-
 
     @Override
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
@@ -84,7 +81,6 @@ public class EdgeRenderer extends ElementRenderer
         }
     }
 
-
     @Override
     protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
@@ -96,20 +92,17 @@ public class EdgeRenderer extends ElementRenderer
         this.arrowWidth = group.getArrowSize().get(0);
     }
 
-
     @Override
     protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
     {
         return null;
     }
 
-
     @Override
     protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
-
 
     @Override
     protected void renderElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
@@ -122,14 +115,14 @@ public class EdgeRenderer extends ElementRenderer
             return;
         }
 
+        final GraphicEdge.EdgeGroup edgeGroup = edge.getGroup();
         final String id = edge.getId();
-        if (this.renderedEdges.contains(id))
+        if (edgeGroup != null && this.renderedEdges.contains(id))
         {
             return;
         }
 
-        // render line
-        final GraphicEdge.EdgeGroup edgeGroup = edge.getGroup();
+        // render line        
         final Point2D pos0 = node0.getPosition();
         final Point2D pos1 = node1.getPosition();
         g.strokeLine(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
@@ -155,17 +148,16 @@ public class EdgeRenderer extends ElementRenderer
         // render text
         renderText(group, g, camera, element);
 
-        // keep track of rendered edges
+        // keep track of rendered edges when we have edge groups
         if (edgeGroup != null)
         {
             for (final GraphicEdge otherEdge : edgeGroup.getEdges())
             {
                 this.renderedEdges.add(otherEdge.getId());
             }
+            this.renderedEdges.add(id);
         }
-        this.renderedEdges.add(id);
     }
-
 
     private void configurePadding(final StyleGroup group)
     {
@@ -179,7 +171,6 @@ public class EdgeRenderer extends ElementRenderer
             this.padding = value.get(0);
         }
     }
-
 
     private void renderArrow(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicEdge edge)
     {

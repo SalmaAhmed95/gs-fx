@@ -292,10 +292,15 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 
     private void endFrame()
     {
+        this.nodeRenderer.clear();
+        this.edgeRenderer.clear();
+        this.spriteRenderer.clear();
+
         if (null == this.fpsLog)
         {
             return;
         }
+
         this.steps += 1;
         long T2 = System.currentTimeMillis();
         long time = T2 - T1;
