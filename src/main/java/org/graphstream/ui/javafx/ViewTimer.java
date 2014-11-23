@@ -1,10 +1,10 @@
 package org.graphstream.ui.javafx;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a javafx view animation timer
@@ -13,7 +13,7 @@ import javafx.scene.canvas.Canvas;
  */
 public class ViewTimer extends AnimationTimer
 {
-    private static final Logger logger = Logger.getLogger(ViewTimer.class.getSimpleName());
+    private static final Logger logger = LoggerFactory.getLogger(ViewTimer.class);
 
     private final AtomicBoolean dirty = new AtomicBoolean(false);
 
@@ -68,11 +68,11 @@ public class ViewTimer extends AnimationTimer
         }
         catch (final Exception e)
         {
-            logger.log(Level.WARNING, "Unable to render graph frame.", e);
+            logger.warn("Unable to render graph frame.", e);
         }
-        if (logger.isLoggable(Level.FINE))
+        if (logger.isDebugEnabled())
         {
-            logger.fine("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
+            logger.debug("Rendered frame in " + (System.nanoTime() - l) / 1000f + " msecs.");
         }
     }
 

@@ -92,6 +92,17 @@
       <artifactId>fxgraphics2d</artifactId>
       <version>1.1</version>
     </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.7</version>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j13</artifactId>
+        <version>1.0.1</version>
+        <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>

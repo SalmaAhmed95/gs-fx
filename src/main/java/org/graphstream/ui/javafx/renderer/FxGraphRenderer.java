@@ -31,6 +31,10 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
+import java.awt.Container;
+import java.awt.Graphics2D;
+import java.io.PrintStream;
+import java.util.Collection;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
@@ -56,20 +60,15 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.Selection;
 import org.jfree.fx.FXGraphics2D;
-
-import java.awt.Container;
-import java.awt.Graphics2D;
-import java.io.PrintStream;
-import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A base graph renderer for JavaFX.
  */
 public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
 {
-    private static final Logger logger = Logger.getLogger(FxGraphRenderer.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(FxGraphRenderer.class);
 
     private GraphicGraph graph;
 
@@ -196,9 +195,9 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
             return;
         }
 
-        if (logger.isLoggable(Level.FINE))
+        if (logger.isDebugEnabled())
         {
-            logger.fine("Rendering view (" + x + "," + y + ") width [" + width + "] height [" + height + "].");
+            logger.debug("Rendering view (" + x + "," + y + ") width [" + width + "] height [" + height + "].");
         }
 
         this.beginFrame();
@@ -281,7 +280,7 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
             catch (final Exception e)
             {
                 this.fpsLog = null;
-                logger.log(Level.WARNING, "Unable to construct print stream for fps log.", e);
+                logger.warn("Unable to construct print stream for fps log.", e);
             }
         }
 

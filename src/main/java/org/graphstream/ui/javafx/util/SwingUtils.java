@@ -97,10 +97,12 @@ public class SwingUtils
             button = java.awt.event.MouseEvent.NOBUTTON;
         }
 
-        final long when = System.currentTimeMillis();
+        final long when = -1;
         final int modifiers = modifiers(event);
         final int x = (int) event.getX();
         final int y = (int) event.getY();
+        final int xAbs = Integer.MAX_VALUE;
+        final int yAbs = Integer.MAX_VALUE;
         final int count = event.getClickCount();
         boolean popup = event.isPopupTrigger();
         if (MouseEvent.MOUSE_CLICKED.equals(type) && event.isMetaDown())
@@ -108,7 +110,7 @@ public class SwingUtils
             // mack books use meta flag for right-clicks
             popup = true;
         }
-        return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, count, popup, button);
+        return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, xAbs, yAbs, count, popup, button);
     }
 
 
@@ -138,7 +140,7 @@ public class SwingUtils
             return null;
         }
 
-        final long when = System.currentTimeMillis();
+        final long when = -1;
         final int modifiers = modifiers(event);
         final int keyCode = keyCode(event);
         final String keyValue = event.getCharacter();
@@ -155,7 +157,7 @@ public class SwingUtils
             return null;
         }
 
-        final long when = System.currentTimeMillis();
+        final long when = -1;
         final int id = java.awt.event.KeyEvent.KEY_PRESSED;
         final int keyCode;
         if (event.getDeltaY() > 0)

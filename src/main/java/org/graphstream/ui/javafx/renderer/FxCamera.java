@@ -37,8 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.transform.Affine;
@@ -60,6 +58,8 @@ import org.graphstream.ui.javafx.util.Approximations;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.util.CubicCurve;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Define how the graph is viewed.
@@ -87,7 +87,7 @@ import org.graphstream.ui.view.util.CubicCurve;
  */
 public class FxCamera implements Camera
 {
-    private static final Logger logger = Logger.getLogger(FxCamera.class.getSimpleName());
+    private static final Logger logger = LoggerFactory.getLogger(FxCamera.class);
 
     private GraphicGraph graph = null;
 
@@ -402,7 +402,7 @@ public class FxCamera implements Camera
     @Override
     public void removeGraphViewport()
     {
-        logger.fine("Graph viewport removed for [" + this + "].");
+        logger.debug("Graph viewport removed for [" + this + "].");
         this.gviewport = null;
         this.resetView();
     }
@@ -433,7 +433,7 @@ public class FxCamera implements Camera
         }
         catch (final NonInvertibleTransformException e)
         {
-            logger.log(Level.FINE, "Cannot inverse gu2px matrix.", e);
+            logger.debug("Cannot inverse gu2px matrix.", e);
         }
 
         this.zoom = 1;
@@ -477,7 +477,7 @@ public class FxCamera implements Camera
         }
         catch (final NonInvertibleTransformException e)
         {
-            logger.log(Level.INFO, "Cannot inverse gu2px matrix.", e);
+            logger.info("Cannot inverse gu2px matrix.", e);
         }
 
         if (!Approximations.approximatelyEquals(0, scale, .000001))
@@ -508,7 +508,7 @@ public class FxCamera implements Camera
     {
         this.zoom = z;
         this.graph.graphChanged = true;
-        logger.fine("Zoom value updated to [" + z + "].");
+        logger.debug("Zoom value updated to [" + z + "].");
     }
 
     @Override
