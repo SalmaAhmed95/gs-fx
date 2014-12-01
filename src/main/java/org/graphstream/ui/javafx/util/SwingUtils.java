@@ -19,6 +19,21 @@ public class SwingUtils
 {
     private static final Component empty = new JLabel();
 
+    public static java.awt.Color toAwt(final Color color)
+    {
+        if (null == color)
+        {
+            return null;
+        }
+        if (color.isOpaque() || color.getOpacity() >= 1d)
+        {
+            return new java.awt.Color((float) color.getRed(), (float) color.getGreen(), (float) color.getBlue());
+        }
+        else
+        {
+            return new java.awt.Color((float) color.getRed(), (float) color.getGreen(), (float) color.getBlue(), (float) color.getOpacity());
+        }
+    }
 
     public static Color fromAwt(final java.awt.Color color)
     {
@@ -35,7 +50,6 @@ public class SwingUtils
             return Color.color(color.getRed() / 255d, color.getGreen() / 255d, color.getBlue() / 255d, color.getAlpha() / 255d);
         }
     }
-
 
     public static java.awt.event.MouseEvent toAwt(final MouseEvent event)
     {
@@ -113,7 +127,6 @@ public class SwingUtils
         return new java.awt.event.MouseEvent(empty, id, when, modifiers, x, y, xAbs, yAbs, count, popup, button);
     }
 
-
     public static java.awt.event.KeyEvent toAwt(final KeyEvent event)
     {
         final EventType type = event.getEventType();
@@ -148,7 +161,6 @@ public class SwingUtils
         return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
     }
 
-
     public static java.awt.event.KeyEvent toAwt(final ScrollEvent event)
     {
         final EventType type = event.getEventType();
@@ -172,7 +184,6 @@ public class SwingUtils
         final char keyChar = ' ';
         return new java.awt.event.KeyEvent(empty, id, when, modifiers, keyCode, keyChar);
     }
-
 
     private static int keyCode(final KeyEvent event)
     {
@@ -208,7 +219,6 @@ public class SwingUtils
                 return 0;
         }
     }
-
 
     private static int modifiers(final InputEvent event)
     {
@@ -276,7 +286,6 @@ public class SwingUtils
 
         return 0;
     }
-
 
     private SwingUtils()
     {

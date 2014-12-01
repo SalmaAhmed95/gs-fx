@@ -42,7 +42,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
-
 public class NodeRenderer extends ElementRenderer
 {
     private Values size;
@@ -51,14 +50,12 @@ public class NodeRenderer extends ElementRenderer
 
     private double height = 0;
 
-
     @Override
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
         this.configureSize(group, element);
     }
-
 
     @Override
     protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
@@ -67,7 +64,6 @@ public class NodeRenderer extends ElementRenderer
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
     }
-
 
     @Override
     protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
@@ -78,13 +74,11 @@ public class NodeRenderer extends ElementRenderer
         return new CircleContext(node, pos, this.width / 2d, this.height / 2d);
     }
 
-
     @Override
     protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
-
 
     @Override
     protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
@@ -93,17 +87,40 @@ public class NodeRenderer extends ElementRenderer
         Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
         double x = pos.getX() - (this.width / 2d);
         double y = pos.getY() - (this.height / 2d);
+
         if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
         {
-            g.fillOval(x, y, this.width, this.height);
+            switch (group.getShape())
+            {
+                case BOX:
+                    g.fillRect(x, y, this.width, this.height);
+                    break;
+                case ROUNDED_BOX:
+                    g.fillRoundRect(x, y, this.width, this.height, 4, 4);
+                    break;
+                case CIRCLE:
+                default:
+                    g.fillOval(x, y, this.width, this.height);
+            }
         }
         if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
         {
-            g.strokeOval(x, y, this.width, this.height);
+            switch (group.getShape())
+            {
+                case BOX:
+                    g.strokeRect(x, y, this.width, this.height);
+                    break;
+                case ROUNDED_BOX:
+                    g.strokeRoundRect(x, y, this.width, this.height, 4, 4);
+                    break;
+                case CIRCLE:
+                default:
+                    g.strokeOval(x, y, this.width, this.height);
+            }
         }
+
         this.renderText(group, g, camera, element);
     }
-
 
     private void configureSize(final StyleGroup group, final GraphicElement element)
     {
