@@ -39,7 +39,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
 import org.graphstream.graph.Edge;
-import org.graphstream.graph.Element;
 import org.graphstream.graph.Node;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
@@ -48,7 +47,6 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.StyleGroup;
-import org.graphstream.ui.graphicGraph.StyleGroupListener;
 import org.graphstream.ui.graphicGraph.StyleGroupSet;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
@@ -66,7 +64,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A base graph renderer for JavaFX.
  */
-public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
+public class FxGraphRenderer implements GraphRenderer
 {
     private static final Logger logger = LoggerFactory.getLogger(FxGraphRenderer.class);
 
@@ -111,7 +109,6 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
             throw new IllegalStateException("Renderer already open, cannot open twice.");
         }
         this.graph = graph;
-        this.graph.getStyleGroups().addListener(this);
         this.camera = new FxCamera(graph);
     }
 
@@ -126,12 +123,7 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
         }
 
         this.camera = null;
-
-        if (this.graph != null)
-        {
-            this.graph.getStyleGroups().removeListener(this);
-            this.graph = null;
-        }
+        this.graph = null;
     }
 
     @Override
@@ -500,19 +492,13 @@ public class FxGraphRenderer implements GraphRenderer, StyleGroupListener
     @Override
     public void setBackLayerRenderer(LayerRenderer renderer)
     {
-        backRenderer = renderer;
+        this.backRenderer = renderer;
     }
 
     @Override
     public void setForeLayoutRenderer(LayerRenderer renderer)
     {
-        foreRenderer = renderer;
-    }
-
-    @Override
-    public void elementStyleChanged(Element element, StyleGroup oldStyle, StyleGroup style)
-    {
-
+        this.foreRenderer = renderer;
     }
 
     protected void displayNothingToDo(final GraphicsContext g, final double w, final double h)

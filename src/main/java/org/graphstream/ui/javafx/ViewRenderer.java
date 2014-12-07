@@ -22,13 +22,11 @@ import org.jfree.fx.FXGraphics2D;
 public class ViewRenderer implements StyleGroupListener
 {
     private final GraphRenderer delegate;
-    
+
     private GraphicGraph graph;
-    
+
     private Canvas canvas;
-    
-    private final ViewTimer timer;
-    
+
     public ViewRenderer(final GraphRenderer delegate)
     {
         if (null == delegate)
@@ -36,14 +34,13 @@ public class ViewRenderer implements StyleGroupListener
             throw new IllegalArgumentException("Delegate cannot be null.");
         }
         this.delegate = delegate;
-        this.timer = new ViewTimer(this);
     }
-    
+
     public Canvas getCanvas()
     {
         return this.canvas;
     }
-    
+
     public void open(final GraphicGraph graph, final Canvas canvas)
     {
         if (null == graph)
@@ -59,7 +56,7 @@ public class ViewRenderer implements StyleGroupListener
         this.delegate.open(graph, null);
         this.canvas = canvas;
     }
-    
+
     public void close()
     {
         if (this.graph != null)
@@ -68,35 +65,29 @@ public class ViewRenderer implements StyleGroupListener
             this.graph = null;
         }
         this.delegate.close();
-        this.timer.stop();
         this.canvas = null;
     }
-    
-    public void repaint()
-    {
-        this.timer.repaint();
-    }
-    
+
     public Camera getCamera()
     {
         return this.delegate.getCamera();
     }
-    
+
     public Collection<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2)
     {
         return this.delegate.allNodesOrSpritesIn(x1, y1, x2, y2);
     }
-    
+
     public GraphicElement findNodeOrSpriteAt(double x, double y)
     {
         return this.delegate.findNodeOrSpriteAt(x, y);
     }
-    
+
     public void moveElementAtPx(GraphicElement element, double x, double y)
     {
         this.delegate.moveElementAtPx(element, x, y);
     }
-    
+
     public void render(final GraphicsContext ctx, final double x, final double y, final double width, final double height)
     {
         if (null == this.graph)
@@ -117,37 +108,35 @@ public class ViewRenderer implements StyleGroupListener
             this.delegate.render(new FXGraphics2D(this.canvas.getGraphicsContext2D()), (int) x, (int) y, (int) width, (int) height);
         }
     }
-    
+
     public void beginSelectionAt(double x1, double y1)
     {
         this.delegate.beginSelectionAt(x1, y1);
     }
-    
+
     public void selectionGrowsAt(double x, double y)
     {
         this.delegate.selectionGrowsAt(x, y);
     }
-    
+
     public void endSelectionAt(double x2, double y2)
     {
         this.delegate.endSelectionAt(x2, y2);
     }
-    
+
     public void setBackLayerRenderer(final LayerRenderer renderer)
     {
         this.delegate.setBackLayerRenderer(renderer);
-        this.repaint();
     }
-    
+
     public void setForeLayoutRenderer(final LayerRenderer renderer)
     {
         this.delegate.setForeLayoutRenderer(renderer);
-        this.repaint();
     }
-    
+
     @Override
     public void elementStyleChanged(Element element, StyleGroup oldStyle, StyleGroup style)
     {
-        this.repaint();
+        this.graph.graphChanged = true;
     }
 }

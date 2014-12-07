@@ -1,5 +1,11 @@
 package org.graphstream.ui.javafx;
 
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Group;
@@ -21,13 +27,6 @@ import org.graphstream.ui.view.util.DefaultShortcutManager;
 import org.graphstream.ui.view.util.ListeningMouseManager;
 import org.graphstream.ui.view.util.MouseManager;
 import org.graphstream.ui.view.util.ShortcutManager;
-
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * a javafx graph view
@@ -126,7 +125,23 @@ public class ViewNode extends Canvas implements View
     @Override
     public void display(final GraphicGraph graph, final boolean graphChanged)
     {
-        this.renderer.repaint();
+        this.repaint();
+    }
+
+    public void repaint()
+    {
+        final Canvas view = this.renderer.getCanvas();
+        if (null == view)
+        {
+            return;
+        }
+
+        // render graph
+        final double x = view.getLayoutX();
+        final double y = view.getLayoutY();
+        final double w = Math.max(0, view.getWidth());
+        final double h = Math.max(0, view.getHeight());
+        this.renderer.render(view.getGraphicsContext2D(), x, y, w, h);
     }
 
     @Override
@@ -154,21 +169,21 @@ public class ViewNode extends Canvas implements View
     public void beginSelectionAt(double x1, double y1)
     {
         this.renderer.beginSelectionAt(x1, y1);
-        this.renderer.repaint();
+        this.repaint();
     }
 
     @Override
     public void selectionGrowsAt(double x, double y)
     {
         this.renderer.selectionGrowsAt(x, y);
-        this.renderer.repaint();
+        this.repaint();
     }
 
     @Override
     public void endSelectionAt(double x2, double y2)
     {
         this.renderer.endSelectionAt(x2, y2);
-        this.renderer.repaint();
+        this.repaint();
     }
 
     @Override
@@ -240,19 +255,16 @@ public class ViewNode extends Canvas implements View
         this.shortcuts = manager;
     }
 
-    public void repaint()
-    {
-        this.renderer.repaint();
-    }
-
     public void setBackLayerRenderer(final LayerRenderer renderer)
     {
         this.renderer.setBackLayerRenderer(renderer);
+        this.repaint();
     }
 
     public void setForeLayoutRenderer(final LayerRenderer renderer)
     {
         this.renderer.setForeLayoutRenderer(renderer);
+        this.repaint();
     }
 
     @Override
@@ -317,12 +329,11 @@ public class ViewNode extends Canvas implements View
 
     private void wireEvents()
     {
-        this.widthProperty().addListener(evt -> renderer.repaint());
-        this.heightProperty().addListener(evt -> renderer.repaint());
+        this.widthProperty().addListener(evt -> repaint());
+        this.heightProperty().addListener(evt -> repaint());
 
         this.addEventHandler(KeyEvent.KEY_PRESSED, event ->
         {
-            System.out.println("Key pressed (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
@@ -335,7 +346,6 @@ public class ViewNode extends Canvas implements View
         });
         this.addEventHandler(KeyEvent.KEY_RELEASED, event ->
         {
-            System.out.println("Key released (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
@@ -348,7 +358,6 @@ public class ViewNode extends Canvas implements View
         });
         this.addEventHandler(KeyEvent.KEY_TYPED, event ->
         {
-            System.out.println("Key typed (" + event + ").");
             final java.awt.event.KeyEvent awt = SwingUtils.toAwt(event);
             if (awt != null)
             {
