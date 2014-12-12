@@ -125,7 +125,17 @@ public class EdgeRenderer extends ElementRenderer
         // render line        
         final Point2D pos0 = node0.getPosition();
         final Point2D pos1 = node1.getPosition();
-        g.strokeLine(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
+        Point2D start0 = node0.intersects(pos0.getX(), pos0.getY(), pos1.getX(), pos1.getY());
+        if (null == start0)
+        {
+            start0 = pos0;
+        }
+        Point2D start1 = node1.intersects(pos1.getX(), pos1.getY(), pos0.getX(), pos0.getY());
+        if (null == start1)
+        {
+            start1 = pos1;
+        }
+        g.strokeLine(start0.getX(), start0.getY(), start1.getX(), start1.getY());
 
         // render arrow
         if (edge.isDirected())
