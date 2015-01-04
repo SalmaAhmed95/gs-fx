@@ -40,8 +40,11 @@ import org.graphstream.graph.Element;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
+import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.javafx.util.Approximations;
 import org.graphstream.ui.javafx.util.FontCache;
 import org.graphstream.ui.javafx.util.SwingUtils;
 
@@ -258,21 +261,68 @@ public abstract class ElementRenderer
     }
 
 
-    protected void renderText(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
+    protected boolean renderText(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         if (StyleConstants.TextMode.HIDDEN.equals(group.getTextMode()))
         {
-            return;
+            return false;
         }
         if (StyleConstants.TextVisibilityMode.HIDDEN.equals(group.getTextVisibilityMode()))
         {
-            return;
+            return false;
         }
 
         final String label = element.getLabel();
         if (null == label || label.isEmpty())
         {
-            return;
+            return false;
+        }
+
+        final double currentZoom = camera.getViewPercent();
+        Values zoomVisibility = group.getTextVisibility();
+        if (null == zoomVisibility)
+        {
+            zoomVisibility = new Values(new Values(Style.Units.PERCENTS, .25d));
+        }
+        boolean validZoom = false;
+        if (StyleConstants.TextVisibilityMode.NORMAL.equals(group.getTextVisibilityMode()))
+        {
+            validZoom = true;
+        }
+        else if (StyleConstants.TextVisibilityMode.AT_ZOOM.equals(group.getTextVisibilityMode()))
+        {
+            final double zoom = zoomVisibility.get(0);
+            validZoom = Approximations.approximatelyEquals(currentZoom, zoom);
+        }
+        else if (StyleConstants.TextVisibilityMode.OVER_ZOOM.equals(group.getTextVisibilityMode()))
+        {
+            final double min = zoomVisibility.get(0);
+            validZoom = currentZoom >= min || Approximations.approximatelyEquals(currentZoom, min);
+        }
+        else if (StyleConstants.TextVisibilityMode.UNDER_ZOOM.equals(group.getTextVisibilityMode()))
+        {
+            final double max = zoomVisibility.get(0);
+            validZoom = currentZoom <= max || Approximations.approximatelyEquals(currentZoom, max);
+        }
+        else if (StyleConstants.TextVisibilityMode.ZOOM_RANGE.equals(group.getTextVisibilityMode()))
+        {
+            final double min = zoomVisibility.get(0);
+            final double max = zoomVisibility.getValueCount() > 1 ? zoomVisibility.get(1) : min;
+            validZoom = (min <= currentZoom && currentZoom <= max) ||
+                Approximations.approximatelyEquals(currentZoom, min) ||
+                Approximations.approximatelyEquals(currentZoom, max);
+        }
+        else if (StyleConstants.TextVisibilityMode.ZOOMS.equals(group.getTextVisibilityMode()))
+        {
+            for (int i = 0; i < zoomVisibility.getValueCount(); i++)
+            {
+                final double zoom = zoomVisibility.get(i);
+                validZoom |= Approximations.approximatelyEquals(currentZoom, zoom);
+            }
+        }
+        if (!validZoom)
+        {
+            return false;
         }
 
         Point2D pos = camera.graphToScreen(new Point2D(element.getX(), element.getY()));
@@ -314,6 +364,7 @@ public abstract class ElementRenderer
         g.setFont(this.textFont);
         g.setFill(this.textColor);
         g.fillText(label, x, y);
+        return true;
     }
 
 
