@@ -19,7 +19,7 @@ public class SquareContext extends AstractContext
     private final Point2D pos;
 
 
-    public SquareContext(GraphicElement element, Rectangle2D bounds, Point2D pos)
+    public SquareContext(final GraphicElement element, final Point2D pos, final Rectangle2D bounds)
     {
         this.element = element;
         this.bounds = bounds;

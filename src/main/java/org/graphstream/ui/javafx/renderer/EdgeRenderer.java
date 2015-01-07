@@ -31,8 +31,6 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
-import java.util.Set;
-import java.util.TreeSet;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.shape.StrokeLineCap;
@@ -47,6 +45,9 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
+
+import java.util.Set;
+import java.util.TreeSet;
 
 public class EdgeRenderer extends ElementRenderer
 {
@@ -93,7 +94,7 @@ public class EdgeRenderer extends ElementRenderer
     }
 
     @Override
-    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    protected ElementContext computeElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         return null;
     }

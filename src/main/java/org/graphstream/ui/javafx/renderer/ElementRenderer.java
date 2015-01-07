@@ -34,6 +34,7 @@ package org.graphstream.ui.javafx.renderer;
 import com.sun.javafx.tk.Toolkit;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.graphstream.graph.Element;
@@ -46,6 +47,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
 import org.graphstream.ui.javafx.util.FontCache;
+import org.graphstream.ui.javafx.util.IconManager;
 import org.graphstream.ui.javafx.util.SwingUtils;
 
 import java.awt.geom.PathIterator;
@@ -74,9 +76,9 @@ public abstract class ElementRenderer
 
     public final void render(final StyleGroup group, final GraphicsContext g, final FxCamera camera)
     {
-        setupRenderingPass(group, g, camera);
-        pushStyle(group, g, camera);
+        this.setupRenderingPass(group, g, camera);
 
+        this.pushStyle(group, g, camera);
         for (final Element e : group.bulkElements())
         {
             final GraphicElement ge = (GraphicElement) e;
@@ -89,7 +91,13 @@ public abstract class ElementRenderer
                 elementInvisible(group, g, camera, ge);
             }
         }
+        for (final Element e : group.bulkElements())
+        {
+            final GraphicElement ge = (GraphicElement) e;
+            this.renderText(group, g, camera, ge);
+        }
 
+        this.pushStyle(group, g, camera);
         if (group.hasDynamicElements())
         {
             for (final Element e : group.dynamicElements())
@@ -108,23 +116,40 @@ public abstract class ElementRenderer
                     elementInvisible(group, g, camera, ge);
                 }
             }
-        }
-
-        if (group.hasEventElements())
-        {
-            for (final ElementEvents event : group.elementsEvents())
+            for (final Element e : group.dynamicElements())
             {
-                final GraphicElement ge = (GraphicElement) event.getElement();
+                final GraphicElement ge = (GraphicElement) e;
                 if (camera.isVisible(ge))
                 {
-                    event.activate();
+                    this.renderText(group, g, camera, ge);
+                }
+            }
+        }
+
+        this.pushStyle(group, g, camera);
+        if (group.hasEventElements())
+        {
+            for (final ElementEvents e : group.elementsEvents())
+            {
+                final GraphicElement ge = (GraphicElement) e.getElement();
+                if (camera.isVisible(ge))
+                {
+                    e.activate();
                     pushStyle(group, g, camera);
                     renderElement(group, g, camera, ge);
-                    event.deactivate();
+                    e.deactivate();
                 }
                 else
                 {
                     elementInvisible(group, g, camera, ge);
+                }
+            }
+            for (final ElementEvents e : group.elementsEvents())
+            {
+                final GraphicElement ge = (GraphicElement) e.getElement();
+                if (camera.isVisible(ge))
+                {
+                    this.renderText(group, g, camera, ge);
                 }
             }
         }
@@ -134,7 +159,7 @@ public abstract class ElementRenderer
     protected abstract void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera);
 
 
-    protected abstract ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element);
+    protected abstract ElementContext computeElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element);
 
 
     protected abstract void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element);
@@ -258,6 +283,34 @@ public abstract class ElementRenderer
             }
             iterator.next();
         }
+    }
+
+
+    protected Image renderIcon(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
+    {
+        final String iconType = group.getIcon();
+        if (null == iconType || iconType.isEmpty())
+        {
+            return null;
+        }
+
+        StyleConstants.IconMode iconMode = group.getIconMode();
+        if (null == iconMode)
+        {
+            iconMode = StyleConstants.IconMode.NONE;
+        }
+
+        final String iconName;
+        if ("dyn-icon".equalsIgnoreCase(iconType))
+        {
+            iconName = element.getAttribute("ui.icon");
+        }
+        else
+        {
+            iconName = iconType;
+        }
+
+        return IconManager.getInstance().get(iconName);
     }
 
 

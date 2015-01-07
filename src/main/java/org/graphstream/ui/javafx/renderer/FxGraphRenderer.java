@@ -31,10 +31,6 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
-import java.awt.Container;
-import java.awt.Graphics2D;
-import java.io.PrintStream;
-import java.util.Collection;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
@@ -60,6 +56,11 @@ import org.graphstream.ui.view.Selection;
 import org.jfree.fx.FXGraphics2D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.Container;
+import java.awt.Graphics2D;
+import java.io.PrintStream;
+import java.util.Collection;
 
 /**
  * A base graph renderer for JavaFX.
@@ -96,10 +97,12 @@ public class FxGraphRenderer implements GraphRenderer
 
     private double sumFps = 0;
 
+
     public FxGraphRenderer()
     {
 
     }
+
 
     @Override
     public void open(final GraphicGraph graph, Container swing)
@@ -111,6 +114,7 @@ public class FxGraphRenderer implements GraphRenderer
         this.graph = graph;
         this.camera = new FxCamera(graph);
     }
+
 
     @Override
     public void close()
@@ -126,6 +130,7 @@ public class FxGraphRenderer implements GraphRenderer
         this.graph = null;
     }
 
+
     @Override
     public void beginSelectionAt(double x1, double y1)
     {
@@ -135,6 +140,7 @@ public class FxGraphRenderer implements GraphRenderer
         this.selection.x2 = x1;
         this.selection.y2 = y1;
     }
+
 
     @Override
     public void selectionGrowsAt(double x, double y)
@@ -146,11 +152,13 @@ public class FxGraphRenderer implements GraphRenderer
         }
     }
 
+
     @Override
     public void endSelectionAt(double x2, double y2)
     {
         this.selection = null;
     }
+
 
     @Override
     public Camera getCamera()
@@ -158,11 +166,13 @@ public class FxGraphRenderer implements GraphRenderer
         return this.camera;
     }
 
+
     @Override
     public Collection<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2)
     {
         return this.camera.allNodesOrSpritesIn(graph, x1, y1, x2, y2);
     }
+
 
     @Override
     public GraphicElement findNodeOrSpriteAt(double x, double y)
@@ -170,11 +180,13 @@ public class FxGraphRenderer implements GraphRenderer
         return this.camera.findNodeOrSpriteAt(graph, x, y);
     }
 
+
     @Override
     public void render(Graphics2D g, int x, int y, int width, int height)
     {
         throw new UnsupportedOperationException();
     }
+
 
     public void render(GraphicsContext g, double x, double y, double width, double height)
     {
@@ -213,6 +225,7 @@ public class FxGraphRenderer implements GraphRenderer
         }
     }
 
+
     @Override
     public void moveElementAtPx(GraphicElement element, double x, double y)
     {
@@ -220,10 +233,12 @@ public class FxGraphRenderer implements GraphRenderer
         element.move(p.x, p.y, element.getZ());
     }
 
+
     public Color getSelectionStroke()
     {
         return selectionStroke;
     }
+
 
     public void setSelectionStroke(Color selectionStroke)
     {
@@ -234,10 +249,12 @@ public class FxGraphRenderer implements GraphRenderer
         this.selectionStroke = selectionStroke;
     }
 
+
     public Color getSelectionFill()
     {
         return selectionFill;
     }
+
 
     public void setSelectionFill(Color selectionFill)
     {
@@ -247,6 +264,7 @@ public class FxGraphRenderer implements GraphRenderer
         }
         this.selectionFill = selectionFill;
     }
+
 
     private void beginFrame()
     {
@@ -282,6 +300,7 @@ public class FxGraphRenderer implements GraphRenderer
         }
     }
 
+
     private void endFrame()
     {
         this.nodeRenderer.clear();
@@ -301,10 +320,11 @@ public class FxGraphRenderer implements GraphRenderer
         this.fpsLog.printf("%.3f   %d   %.3f%n", fps, time, (this.sumFps / this.steps));
     }
 
+
     private void renderGraph(final GraphicsContext g)
     {
         this.camera.pushView(this.graph, g);
-        this.computeGraphElements();
+        this.computeGraphElements(g);
         g.setTransform(new Affine());
         this.renderGraphBackground(g);
         this.renderBackLayer(new FXGraphics2D(g));
@@ -322,6 +342,7 @@ public class FxGraphRenderer implements GraphRenderer
         this.renderForeLayer(new FXGraphics2D(g));
     }
 
+
     protected void renderGraphBackground(final GraphicsContext g)
     {
         final StyleGroup group = graph.getStyle();
@@ -338,7 +359,8 @@ public class FxGraphRenderer implements GraphRenderer
         }
     }
 
-    private void computeGraphElements()
+
+    private void computeGraphElements(final GraphicsContext g)
     {
         for (final Node node : this.graph.getEachNode())
         {
@@ -346,7 +368,7 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
-                context = this.nodeRenderer.computeElement(group, this.camera, (GraphicNode) node);
+                context = this.nodeRenderer.computeElement(group, g, this.camera, (GraphicNode) node);
             }
             if (context != null)
             {
@@ -363,7 +385,7 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
-                context = this.edgeRenderer.computeElement(group, this.camera, (GraphicEdge) edge);
+                context = this.edgeRenderer.computeElement(group, g, this.camera, (GraphicEdge) edge);
             }
             if (context != null)
             {
@@ -380,7 +402,7 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
-                context = this.spriteRenderer.computeElement(group, this.camera, sprite);
+                context = this.spriteRenderer.computeElement(group, g, this.camera, sprite);
             }
             if (context != null)
             {
@@ -392,6 +414,7 @@ public class FxGraphRenderer implements GraphRenderer
             }
         }
     }
+
 
     private void renderGraphElements(final GraphicsContext g)
     {
@@ -421,6 +444,7 @@ public class FxGraphRenderer implements GraphRenderer
             }
         }
     }
+
 
     private void renderSelection(final GraphicsContext g)
     {
@@ -456,6 +480,7 @@ public class FxGraphRenderer implements GraphRenderer
         g.strokeRect(x1, y1, x2 - x1, y2 - y1);
     }
 
+
     private void renderBackLayer(final Graphics2D g)
     {
         if (null == this.backRenderer)
@@ -464,6 +489,7 @@ public class FxGraphRenderer implements GraphRenderer
         }
         this.renderLayer(this.backRenderer, g);
     }
+
 
     private void renderForeLayer(final Graphics2D g)
     {
@@ -474,14 +500,16 @@ public class FxGraphRenderer implements GraphRenderer
         this.renderLayer(this.foreRenderer, g);
     }
 
+
     private void renderLayer(final LayerRenderer layer, final Graphics2D g)
     {
         final GraphMetrics metrics = camera.getMetrics();
         layer.render(g, graph, metrics.ratioPx2Gu,
-                (int) metrics.viewport[2], (int) metrics.viewport[3],
-                metrics.loVisible.x, metrics.loVisible.y,
-                metrics.hiVisible.x, metrics.hiVisible.y);
+            (int) metrics.viewport[2], (int) metrics.viewport[3],
+            metrics.loVisible.x, metrics.loVisible.y,
+            metrics.hiVisible.x, metrics.hiVisible.y);
     }
+
 
     @Override
     public void screenshot(String filename, int width, int height)
@@ -489,17 +517,20 @@ public class FxGraphRenderer implements GraphRenderer
         throw new UnsupportedOperationException();
     }
 
+
     @Override
     public void setBackLayerRenderer(LayerRenderer renderer)
     {
         this.backRenderer = renderer;
     }
 
+
     @Override
     public void setForeLayoutRenderer(LayerRenderer renderer)
     {
         this.foreRenderer = renderer;
     }
+
 
     protected void displayNothingToDo(final GraphicsContext g, final double w, final double h)
     {

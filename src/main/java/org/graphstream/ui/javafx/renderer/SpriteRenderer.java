@@ -93,7 +93,7 @@ public class SpriteRenderer extends ElementRenderer
 
 
     @Override
-    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    protected ElementContext computeElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         return null;
     }

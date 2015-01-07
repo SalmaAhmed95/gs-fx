@@ -32,7 +32,9 @@
 package org.graphstream.ui.javafx.renderer;
 
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
@@ -42,6 +44,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
+
 public class NodeRenderer extends ElementRenderer
 {
     private Values size;
@@ -50,35 +53,52 @@ public class NodeRenderer extends ElementRenderer
 
     private double height = 0;
 
+
     @Override
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
-        this.configureSize(group, element);
+        this.configureSize(group, g, camera, element);
     }
+
 
     @Override
     protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
-        this.configureSize(group, null);
+        this.configureSize(group, g, camera, null);
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
     }
 
+
     @Override
-    protected ElementContext computeElement(StyleGroup group, FxCamera camera, GraphicElement element)
+    protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
-        GraphicNode node = (GraphicNode) element;
-        this.configureSize(group, element);
-        Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
-        return new CircleContext(node, pos, this.width / 2d, this.height / 2d);
+        final GraphicNode node = (GraphicNode) element;
+        this.configureSize(group, g, camera, element);
+        final Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
+        final Image icon = this.renderIcon(group, g, camera, element);
+        if (icon != null)
+        {
+            final double minx = pos.getX() - this.width / 2d;
+            final double miny = pos.getY() - this.height / 2d;
+            return new SquareContext(node, pos, new Rectangle2D(minx, miny, this.width, this.height));
+        }
+        else
+        {
+            final double radiusx = this.width / 2d;
+            final double radiusy = this.height / 2d;
+            return new CircleContext(node, pos, radiusx, radiusy);
+        }
     }
+
 
     @Override
     protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
 
     }
+
 
     @Override
     protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
@@ -103,6 +123,7 @@ public class NodeRenderer extends ElementRenderer
                     g.fillOval(x, y, this.width, this.height);
             }
         }
+
         if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
         {
             switch (group.getShape())
@@ -119,10 +140,15 @@ public class NodeRenderer extends ElementRenderer
             }
         }
 
-        this.renderText(group, g, camera, element);
+        final Image icon = this.renderIcon(group, g, camera, element);
+        if (icon != null)
+        {
+            g.drawImage(icon, pos.getX() - icon.getWidth() / 2d, pos.getY() - icon.getHeight() / 2d);
+        }
     }
 
-    private void configureSize(final StyleGroup group, final GraphicElement element)
+
+    private void configureSize(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
         {
@@ -140,6 +166,15 @@ public class NodeRenderer extends ElementRenderer
                 this.size = group.getSize();
                 this.width = this.size.get(0);
                 this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
+                if (StyleConstants.Units.GU.equals(this.size.getUnits()))
+                {
+                    final Point2D pos = camera.graphToScreen(new Point2D(this.width, this.height));
+                    if (pos != null && Double.isFinite(pos.getX()) && Double.isFinite(pos.getY()))
+                    {
+                        this.width = pos.getX();
+                        this.height = pos.getY();
+                    }
+                }
             }
         }
         else
@@ -147,6 +182,34 @@ public class NodeRenderer extends ElementRenderer
             this.size = group.getSize();
             this.width = this.size.get(0);
             this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
+            if (StyleConstants.Units.GU.equals(this.size.getUnits()))
+            {
+                final Point2D pos = camera.graphToScreen(new Point2D(this.width, this.height));
+                if (pos != null && Double.isFinite(pos.getX()) && Double.isFinite(pos.getY()))
+                {
+                    this.width = pos.getX();
+                    this.height = pos.getY();
+                }
+            }
+        }
+
+        if (SizeMode.FIT.equals(group.getSizeMode()))
+        {
+            final Image icon = this.renderIcon(group, g, camera, element);
+            if (icon != null)
+            {
+                this.width = Math.max(this.width, icon.getWidth());
+                this.height = Math.max(this.height, icon.getHeight());
+            }
+        }
+
+        final Values padding = group.getPadding();
+        if (padding != null && padding.getValueCount() > 0)
+        {
+            final double paddingx = padding.get(0);
+            final double paddingy = padding.getValueCount() > 1 ? padding.get(1) : paddingx;
+            this.width += paddingx * 2;
+            this.height += paddingy;
         }
     }
 }
