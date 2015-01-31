@@ -55,6 +55,12 @@ import java.awt.geom.PathIterator;
 
 public abstract class ElementRenderer
 {
+    private boolean autoScale = true;
+
+    private int maxFontSize = 24;
+
+    private int minFontSize = 6;
+
     private Font textFont;
 
     private Color textColor;
@@ -65,6 +71,18 @@ public abstract class ElementRenderer
     public ElementRenderer()
     {
 
+    }
+
+
+    public boolean isAutoScale()
+    {
+        return this.autoScale;
+    }
+
+
+    public void setAutoScale(final boolean autoScale)
+    {
+        this.autoScale = autoScale;
     }
 
 
@@ -170,7 +188,7 @@ public abstract class ElementRenderer
 
     protected void setupRenderingPass(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
-        this.pushTextStyle(group, g);
+        this.pushTextStyle(group, g, camera);
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
     }
@@ -191,7 +209,7 @@ public abstract class ElementRenderer
     }
 
 
-    protected void pushTextStyle(final StyleGroup group, final GraphicsContext g)
+    protected void pushTextStyle(final StyleGroup group, final GraphicsContext g, final FxCamera camera)
     {
         String fontName = group.getTextFont();
         StyleConstants.TextStyle textStyle = group.getTextStyle();
@@ -200,7 +218,25 @@ public abstract class ElementRenderer
             textStyle = StyleConstants.TextStyle.NORMAL;
         }
 
-        this.textSize = group.getTextSize().intValue();
+        if (this.autoScale)
+        {
+            final double styledSize = group.getTextSize().doubleValue();
+            if (camera.getViewPercent() <= 1)
+            {
+                final double scaledSize = styledSize + (1d - camera.getViewPercent()) * styledSize;
+                this.textSize = (int) Math.round(Math.min(this.maxFontSize, scaledSize));
+            }
+            else
+            {
+                final double scaledSize = styledSize - (camera.getViewPercent() - 1d) * styledSize;
+                this.textSize = (int) Math.round(Math.max(this.minFontSize, scaledSize));
+            }
+        }
+        else
+        {
+            this.textSize = group.getTextSize().intValue();
+        }
+
         this.textColor = SwingUtils.fromAwt(group.getTextColor(0));
         if (null == this.textColor)
         {
@@ -321,6 +357,10 @@ public abstract class ElementRenderer
             return false;
         }
         if (StyleConstants.TextVisibilityMode.HIDDEN.equals(group.getTextVisibilityMode()))
+        {
+            return false;
+        }
+        if (this.textSize <= this.minFontSize)
         {
             return false;
         }
