@@ -218,7 +218,7 @@ public abstract class ElementRenderer
             textStyle = StyleConstants.TextStyle.NORMAL;
         }
 
-        if (this.autoScale)
+        if (this.isAutoScale())
         {
             final double styledSize = group.getTextSize().doubleValue();
             if (camera.getViewPercent() <= 1)
@@ -322,6 +322,35 @@ public abstract class ElementRenderer
     }
 
 
+    protected Image renderIcon(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element, final double width, final double height)
+    {
+        final String iconType = group.getIcon();
+        if (null == iconType || iconType.isEmpty())
+        {
+            return null;
+        }
+
+        final String iconName;
+        if ("dyn-icon".equalsIgnoreCase(iconType) || "dynamic".equalsIgnoreCase(iconType))
+        {
+            iconName = element.getAttribute("ui.icon");
+        }
+        else
+        {
+            iconName = iconType;
+        }
+
+        if (null == iconName)
+        {
+            return null;
+        }
+
+        final int widthPx = (int) Math.round(width);
+        final int heightPx = (int) Math.round(height);
+        return IconManager.getInstance().get(iconName, widthPx, heightPx);
+    }
+
+
     protected Image renderIcon(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         final String iconType = group.getIcon();
@@ -330,20 +359,19 @@ public abstract class ElementRenderer
             return null;
         }
 
-        StyleConstants.IconMode iconMode = group.getIconMode();
-        if (null == iconMode)
-        {
-            iconMode = StyleConstants.IconMode.NONE;
-        }
-
         final String iconName;
-        if ("dyn-icon".equalsIgnoreCase(iconType))
+        if ("dyn-icon".equalsIgnoreCase(iconType) || "dynamic".equalsIgnoreCase(iconType))
         {
             iconName = element.getAttribute("ui.icon");
         }
         else
         {
             iconName = iconType;
+        }
+
+        if (null == iconName)
+        {
+            return null;
         }
 
         return IconManager.getInstance().get(iconName);

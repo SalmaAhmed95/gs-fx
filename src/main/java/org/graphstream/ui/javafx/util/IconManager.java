@@ -74,6 +74,16 @@ public class IconManager
     }
 
 
+    public boolean remove(final String name)
+    {
+        if (null == name)
+        {
+            return false;
+        }
+        return this.icons.remove(name) != null;
+    }
+
+
     public void clear()
     {
         this.cache.clear();

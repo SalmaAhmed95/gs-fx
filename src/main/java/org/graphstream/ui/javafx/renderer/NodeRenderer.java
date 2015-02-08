@@ -53,6 +53,10 @@ public class NodeRenderer extends ElementRenderer
 
     private double height = 0;
 
+    private double paddingX = 0;
+
+    private double paddingY = 0;
+
 
     @Override
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
@@ -80,14 +84,14 @@ public class NodeRenderer extends ElementRenderer
         final Image icon = this.renderIcon(group, g, camera, element);
         if (icon != null)
         {
-            final double minx = pos.getX() - this.width / 2d;
-            final double miny = pos.getY() - this.height / 2d;
-            return new SquareContext(node, pos, new Rectangle2D(minx, miny, this.width, this.height));
+            final double minx = pos.getX() - (this.width / 2d) - this.paddingX;
+            final double miny = pos.getY() - (this.height / 2d) - this.paddingX;
+            return new SquareContext(node, pos, new Rectangle2D(minx, miny, this.width + this.paddingX * 2d, this.height + this.paddingY * 2));
         }
         else
         {
-            final double radiusx = this.width / 2d;
-            final double radiusy = this.height / 2d;
+            final double radiusx = (this.width / 2d) + this.paddingX;
+            final double radiusy = (this.height / 2d) + this.paddingY;
             return new CircleContext(node, pos, radiusx, radiusy);
         }
     }
@@ -104,23 +108,22 @@ public class NodeRenderer extends ElementRenderer
     protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         GraphicNode node = (GraphicNode) element;
+        Rectangle2D bounds = camera.getElement(element.getId()).getBounds();
         Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
-        double x = pos.getX() - (this.width / 2d);
-        double y = pos.getY() - (this.height / 2d);
 
         if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
         {
             switch (group.getShape())
             {
                 case BOX:
-                    g.fillRect(x, y, this.width, this.height);
+                    g.fillRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
                     break;
                 case ROUNDED_BOX:
-                    g.fillRoundRect(x, y, this.width, this.height, 4, 4);
+                    g.fillRoundRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight(), 4, 4);
                     break;
                 case CIRCLE:
                 default:
-                    g.fillOval(x, y, this.width, this.height);
+                    g.fillOval(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
             }
         }
 
@@ -129,21 +132,23 @@ public class NodeRenderer extends ElementRenderer
             switch (group.getShape())
             {
                 case BOX:
-                    g.strokeRect(x, y, this.width, this.height);
+                    g.strokeRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
                     break;
                 case ROUNDED_BOX:
-                    g.strokeRoundRect(x, y, this.width, this.height, 4, 4);
+                    g.strokeRoundRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight(), 4, 4);
                     break;
                 case CIRCLE:
                 default:
-                    g.strokeOval(x, y, this.width, this.height);
+                    g.strokeOval(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
             }
         }
 
-        final Image icon = this.renderIcon(group, g, camera, element);
+        final Image icon = this.renderIcon(group, g, camera, element, this.width, this.height);
         if (icon != null)
         {
-            g.drawImage(icon, pos.getX() - icon.getWidth() / 2d, pos.getY() - icon.getHeight() / 2d);
+            final double iconX = pos.getX() - (icon.getWidth() / 2d);
+            final double iconY = pos.getY() - (icon.getHeight() / 2d);
+            g.drawImage(icon, iconX, iconY);
         }
     }
 
@@ -203,13 +208,38 @@ public class NodeRenderer extends ElementRenderer
             }
         }
 
+        if (this.isAutoScale())
+        {
+            if (camera.getViewPercent() <= 1)
+            {
+                final double maxWidth = this.width * 1.5d;
+                final double maxHeight = this.height * 1.5d;
+                final double scaledWidth = this.width + (1d - camera.getViewPercent()) * this.width;
+                final double scaledHeight = this.height + (1d - camera.getViewPercent()) * this.height;
+                this.width = (int) Math.round(Math.min(maxWidth, scaledWidth));
+                this.height = (int) Math.round(Math.min(maxHeight, scaledHeight));
+            }
+            else
+            {
+                final double minWidth = this.width * 0.5d;
+                final double minHeight = this.height * 0.5d;
+                final double scaledWidth = this.width - (camera.getViewPercent() - 1d) * this.width;
+                final double scaledHeight = this.height - (camera.getViewPercent() - 1d) * this.height;
+                this.width = (int) Math.round(Math.max(minWidth, scaledWidth));
+                this.height = (int) Math.round(Math.max(minHeight, scaledHeight));
+            }
+        }
+
         final Values padding = group.getPadding();
         if (padding != null && padding.getValueCount() > 0)
         {
-            final double paddingx = padding.get(0);
-            final double paddingy = padding.getValueCount() > 1 ? padding.get(1) : paddingx;
-            this.width += paddingx * 2;
-            this.height += paddingy;
+            this.paddingX = padding.get(0);
+            this.paddingY = padding.getValueCount() > 1 ? padding.get(1) : this.paddingX;
+        }
+        else
+        {
+            this.paddingX = 0d;
+            this.paddingY = 0d;
         }
     }
 }
