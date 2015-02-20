@@ -33,6 +33,7 @@ package org.graphstream.ui.javafx.renderer;
 
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
 import javafx.scene.transform.Affine;
@@ -51,7 +52,7 @@ import java.util.TreeSet;
 
 public class EdgeRenderer extends ElementRenderer
 {
-    private double width = 1;
+    private double lineWidth = 1;
 
     private double arrowLength = 0;
 
@@ -61,43 +62,71 @@ public class EdgeRenderer extends ElementRenderer
 
     private final Set<String> renderedEdges = new TreeSet<>();
 
+    private final NodeRenderer nodeRenderer = new NodeRenderer();
+
+
     @Override
     public void clear()
     {
         super.clear();
         this.renderedEdges.clear();
+        this.nodeRenderer.clear();
     }
 
+
     @Override
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
+    protected void pushDynStyle(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
         this.configurePadding(group);
+        this.nodeRenderer.pushDynStyle(group, g, camera, element);
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
         {
-            this.width = camera.getMetrics().lengthToGu(StyleConstants.convertValue(element.getAttribute("ui.size")));
-            g.setLineWidth(this.width);
+            this.lineWidth = camera.getMetrics().lengthToGu(StyleConstants.convertValue(element.getAttribute("ui.size")));
+            g.setLineWidth(this.lineWidth);
             g.setLineCap(StrokeLineCap.BUTT);
             g.setLineJoin(StrokeLineJoin.BEVEL);
         }
     }
 
+
     @Override
-    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
+    protected void pushStyle(final StyleGroup group, final GraphicsContext g, final FxCamera camera)
     {
         this.configurePadding(group);
         this.pushFillStyle(group, g);
         this.pushStrokeStyle(group, g);
-        this.width = group.getSize().get(0);
+        this.nodeRenderer.pushStyle(group, g, camera);
+        this.lineWidth = group.getStrokeWidth().doubleValue();
         this.arrowLength = group.getArrowSize().get(0);
         this.arrowWidth = group.getArrowSize().get(0);
     }
 
+
     @Override
-    protected ElementContext computeElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
+    protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
-        return null;
+        // for now, edges only have bounds (and thus 'clickable') when they have an image
+        final Image icon = this.renderIcon(group, g, camera, element);
+        if (null == icon)
+        {
+            return null;
+        }
+
+        // render image similar to how we handle nodes, but at midpoint between nodes
+        final GraphicEdge edge = (GraphicEdge) element;
+        final ElementContext node0 = camera.getElement(edge.getNode0().getId());
+        final ElementContext node1 = camera.getElement(edge.getNode1().getId());
+        if (null == node0 || null == node1)
+        {
+            return null;
+        }
+        final Point2D pos0 = node0.getPosition();
+        final Point2D pos1 = node1.getPosition();
+        final Point2D midpoint = new Point2D((pos0.getX() + pos1.getX()) / 2d, (pos0.getY() + pos1.getY()) / 2d);
+        return this.nodeRenderer.computeElement(group, g, camera, element, midpoint);
     }
+
 
     @Override
     protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
@@ -105,9 +134,11 @@ public class EdgeRenderer extends ElementRenderer
 
     }
 
+
     @Override
     protected void renderElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
+        // grab edge, node positions
         final GraphicEdge edge = (GraphicEdge) element;
         final ElementContext node0 = camera.getElement(edge.getNode0().getId());
         final ElementContext node1 = camera.getElement(edge.getNode1().getId());
@@ -150,14 +181,18 @@ public class EdgeRenderer extends ElementRenderer
             {
                 if (otherEdge.isDirected() && !this.renderedEdges.contains(otherEdge.getId()) && edge.getNode0() != otherEdge.getNode0())
                 {
-                    renderArrow(group, g, camera, otherEdge);
+                    this.renderArrow(group, g, camera, otherEdge);
                     break;
                 }
             }
         }
 
+        // render icon at midpoint
+        final Point2D midpoint = new Point2D((pos0.getX() + pos1.getX()) / 2d, (pos0.getY() + pos1.getY()) / 2d);
+        this.nodeRenderer.renderElement(group, g, camera, element, midpoint);
+
         // render text
-        renderText(group, g, camera, element);
+        this.renderText(group, g, camera, element);
 
         // keep track of rendered edges when we have edge groups
         if (edgeGroup != null)
@@ -169,6 +204,7 @@ public class EdgeRenderer extends ElementRenderer
             this.renderedEdges.add(id);
         }
     }
+
 
     private void configurePadding(final StyleGroup group)
     {
@@ -182,6 +218,7 @@ public class EdgeRenderer extends ElementRenderer
             this.padding = value.get(0);
         }
     }
+
 
     private void renderArrow(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicEdge edge)
     {

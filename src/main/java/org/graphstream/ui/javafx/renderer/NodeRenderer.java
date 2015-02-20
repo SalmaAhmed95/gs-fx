@@ -38,7 +38,6 @@ import javafx.scene.image.Image;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
-import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
@@ -47,15 +46,13 @@ import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
 public class NodeRenderer extends ElementRenderer
 {
-    private Values size;
+    private double width = 0d;
 
-    private double width = 0;
+    private double height = 0d;
 
-    private double height = 0;
+    private double paddingX = 0d;
 
-    private double paddingX = 0;
-
-    private double paddingY = 0;
+    private double paddingY = 0d;
 
 
     @Override
@@ -79,20 +76,32 @@ public class NodeRenderer extends ElementRenderer
     protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         final GraphicNode node = (GraphicNode) element;
-        this.configureSize(group, g, camera, element);
         final Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
-        final Image icon = this.renderIcon(group, g, camera, element);
-        if (icon != null)
+        return this.computeElement(group, g, camera, element, pos);
+    }
+
+
+    protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element, final Point2D pos)
+    {
+        this.configureSize(group, g, camera, element);
+        if (null == pos)
         {
-            final double minx = pos.getX() - (this.width / 2d) - this.paddingX;
-            final double miny = pos.getY() - (this.height / 2d) - this.paddingX;
-            return new SquareContext(node, pos, new Rectangle2D(minx, miny, this.width + this.paddingX * 2d, this.height + this.paddingY * 2));
+            return null;
         }
-        else
+
+        switch (group.getShape())
         {
-            final double radiusx = (this.width / 2d) + this.paddingX;
-            final double radiusy = (this.height / 2d) + this.paddingY;
-            return new CircleContext(node, pos, radiusx, radiusy);
+            case BOX:
+            case ROUNDED_BOX:
+                final double minx = pos.getX() - (this.width / 2d) - this.paddingX;
+                final double miny = pos.getY() - (this.height / 2d) - this.paddingX;
+                return new SquareContext(element, pos, new Rectangle2D(minx, miny, this.width + this.paddingX * 2d, this.height + this.paddingY * 2));
+            case CIRCLE:
+            default:
+                final double sqrt2 = Math.sqrt(2);
+                final double radiusx = (this.width * sqrt2 / 2d) + this.paddingX;
+                final double radiusy = (this.height * sqrt2 / 2d) + this.paddingY;
+                return new CircleContext(element, pos, radiusx, radiusy);
         }
     }
 
@@ -100,16 +109,37 @@ public class NodeRenderer extends ElementRenderer
     @Override
     protected void elementInvisible(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
-
+        // do nothing
     }
 
 
     @Override
     protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
-        GraphicNode node = (GraphicNode) element;
-        Rectangle2D bounds = camera.getElement(element.getId()).getBounds();
-        Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
+        final GraphicNode node = (GraphicNode) element;
+        final Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
+        this.renderElement(group, g, camera, node, pos);
+    }
+
+
+    protected void renderElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element, Point2D pos)
+    {
+        if (null == group || null == element)
+        {
+            return;
+        }
+
+        final ElementContext ctx = camera.getElement(element.getId());
+        if (null == ctx)
+        {
+            return;
+        }
+
+        final Rectangle2D bounds = ctx.getBounds();
+        if (null == pos || null == bounds)
+        {
+            return;
+        }
 
         if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
         {
@@ -161,41 +191,19 @@ public class NodeRenderer extends ElementRenderer
             if (s != null)
             {
                 final Value length = StyleConstants.convertValue(s);
-                final double lengthPx = length != null ? length.doubleValue() : 1d;
-                this.size = new Values(Style.Units.PX, lengthPx);
-                this.width = lengthPx;
-                this.height = lengthPx;
+                this.width = length != null ? length.doubleValue() : 0d;
+                this.height = length != null ? length.doubleValue() : 0d;
             }
             else
             {
-                this.size = group.getSize();
-                this.width = this.size.get(0);
-                this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
-                if (StyleConstants.Units.GU.equals(this.size.getUnits()))
-                {
-                    final Point2D pos = camera.graphToScreen(new Point2D(this.width, this.height));
-                    if (pos != null && Double.isFinite(pos.getX()) && Double.isFinite(pos.getY()))
-                    {
-                        this.width = pos.getX();
-                        this.height = pos.getY();
-                    }
-                }
+                this.width = group.getSize().get(0);
+                this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
             }
         }
         else
         {
-            this.size = group.getSize();
-            this.width = this.size.get(0);
-            this.height = this.size.size() > 1 ? this.size.get(1) : this.width;
-            if (StyleConstants.Units.GU.equals(this.size.getUnits()))
-            {
-                final Point2D pos = camera.graphToScreen(new Point2D(this.width, this.height));
-                if (pos != null && Double.isFinite(pos.getX()) && Double.isFinite(pos.getY()))
-                {
-                    this.width = pos.getX();
-                    this.height = pos.getY();
-                }
-            }
+            this.width = group.getSize().get(0);
+            this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
         }
 
         if (SizeMode.FIT.equals(group.getSizeMode()))

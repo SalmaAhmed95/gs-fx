@@ -446,13 +446,17 @@ public abstract class ElementRenderer
             return false;
         }
 
-        Point2D pos = camera.graphToScreen(new Point2D(element.getX(), element.getY()));
-        ElementContext context = camera.getElement(element.getId());
+        final Point2D pos = camera.graphToScreen(new Point2D(element.getX(), element.getY()));
+        final ElementContext context = camera.getElement(element.getId());
+        if (null == pos || null == context)
+        {
+            return false;
+        }
         double x = pos.getX();
         double y = pos.getY() + this.textSize / 3d;
         double w = Toolkit.getToolkit().getFontLoader().computeStringWidth(label, this.textFont);
-        double width = context != null ? Math.max(1, context.getBounds().getWidth()) : 0d;
-        double height = context != null ? Math.max(1, context.getBounds().getHeight()) : 0d;
+        double width = Math.max(1, context.getBounds().getWidth());
+        double height = Math.max(1, context.getBounds().getHeight());
 
         switch (group.getTextAlignment())
         {
