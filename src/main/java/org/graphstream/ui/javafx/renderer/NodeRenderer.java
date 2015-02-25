@@ -35,6 +35,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.transform.Affine;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
@@ -141,19 +142,29 @@ public class NodeRenderer extends ElementRenderer
             return;
         }
 
+        final Affine transform = new Affine();
+        transform.appendTranslation(ctx.getPosition().getX(), ctx.getPosition().getY());
+        switch (group.getShape())
+        {
+            case DIAMOND:
+                transform.appendRotation(45d);
+        }
+        g.setTransform(transform);
+
         if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
         {
             switch (group.getShape())
             {
                 case BOX:
-                    g.fillRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
+                    g.fillRect(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight());
                     break;
+                case DIAMOND:
                 case ROUNDED_BOX:
-                    g.fillRoundRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight(), 4, 4);
+                    g.fillRoundRect(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight(), 4, 4);
                     break;
                 case CIRCLE:
                 default:
-                    g.fillOval(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
+                    g.fillOval(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight());
             }
         }
 
@@ -162,16 +173,19 @@ public class NodeRenderer extends ElementRenderer
             switch (group.getShape())
             {
                 case BOX:
-                    g.strokeRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
+                    g.strokeRect(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight());
                     break;
+                case DIAMOND:
                 case ROUNDED_BOX:
-                    g.strokeRoundRect(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight(), 4, 4);
+                    g.strokeRoundRect(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight(), 4, 4);
                     break;
                 case CIRCLE:
                 default:
-                    g.strokeOval(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
+                    g.strokeOval(-bounds.getWidth() / 2d, -bounds.getHeight() / 2d, bounds.getWidth(), bounds.getHeight());
             }
         }
+
+        g.setTransform(new Affine());
 
         final Image icon = this.renderIcon(group, g, camera, element, this.width, this.height);
         if (icon != null)
