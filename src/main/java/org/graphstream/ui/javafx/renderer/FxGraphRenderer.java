@@ -368,6 +368,11 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
+                this.nodeRenderer.pushStyle(group, g, this.camera);
+                if (node instanceof GraphicNode)
+                {
+                    this.nodeRenderer.pushDynStyle(group, g, this.camera, (GraphicNode) node);
+                }
                 context = this.nodeRenderer.computeElement(group, g, this.camera, (GraphicNode) node);
             }
             if (context != null)
@@ -385,6 +390,11 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
+                this.edgeRenderer.pushStyle(group, g, this.camera);
+                if (edge instanceof GraphicEdge)
+                {
+                    this.edgeRenderer.pushDynStyle(group, g, this.camera, (GraphicEdge) edge);
+                }
                 context = this.edgeRenderer.computeElement(group, g, this.camera, (GraphicEdge) edge);
             }
             if (context != null)
@@ -402,6 +412,8 @@ public class FxGraphRenderer implements GraphRenderer
             ElementContext context = null;
             if (group != null)
             {
+                this.spriteRenderer.pushStyle(group, g, this.camera);
+                this.spriteRenderer.pushDynStyle(group, g, this.camera, sprite);
                 context = this.spriteRenderer.computeElement(group, g, this.camera, sprite);
             }
             if (context != null)

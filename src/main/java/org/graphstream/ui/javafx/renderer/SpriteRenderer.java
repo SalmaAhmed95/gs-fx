@@ -84,6 +84,8 @@ public class SpriteRenderer extends ElementRenderer
     @Override
     protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
     {
+        super.pushStyle(group, g, camera);
+
         this.size = group.getSize();
         this.width = this.metrics.lengthToGu(this.size, 0);
         this.height = this.size.size() > 1 ? this.metrics.lengthToGu(this.size, 1) : this.width;

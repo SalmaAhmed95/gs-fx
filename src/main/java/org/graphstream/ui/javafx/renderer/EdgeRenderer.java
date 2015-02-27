@@ -32,6 +32,7 @@
 package org.graphstream.ui.javafx.renderer;
 
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.shape.StrokeLineCap;
@@ -44,11 +45,16 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.javafx.util.Approximations;
+import org.graphstream.ui.javafx.util.IconManager;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 
 public class EdgeRenderer extends ElementRenderer
 {
@@ -58,11 +64,7 @@ public class EdgeRenderer extends ElementRenderer
 
     private double arrowWidth = 0;
 
-    private double padding;
-
     private final Set<String> renderedEdges = new TreeSet<>();
-
-    private final NodeRenderer nodeRenderer = new NodeRenderer();
 
 
     @Override
@@ -70,7 +72,6 @@ public class EdgeRenderer extends ElementRenderer
     {
         super.clear();
         this.renderedEdges.clear();
-        this.nodeRenderer.clear();
     }
 
 
@@ -78,8 +79,7 @@ public class EdgeRenderer extends ElementRenderer
     protected void pushDynStyle(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         super.pushDynStyle(group, g, camera, element);
-        this.configurePadding(group);
-        this.nodeRenderer.pushDynStyle(group, g, camera, element);
+
         if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
         {
             this.lineWidth = camera.getMetrics().lengthToGu(StyleConstants.convertValue(element.getAttribute("ui.size")));
@@ -93,10 +93,8 @@ public class EdgeRenderer extends ElementRenderer
     @Override
     protected void pushStyle(final StyleGroup group, final GraphicsContext g, final FxCamera camera)
     {
-        this.configurePadding(group);
-        this.pushFillStyle(group, g);
-        this.pushStrokeStyle(group, g);
-        this.nodeRenderer.pushStyle(group, g, camera);
+        super.pushStyle(group, g, camera);
+
         this.lineWidth = group.getStrokeWidth().doubleValue();
         this.arrowLength = group.getArrowSize().get(0);
         this.arrowWidth = group.getArrowSize().get(0);
@@ -106,25 +104,8 @@ public class EdgeRenderer extends ElementRenderer
     @Override
     protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
-        // for now, edges only have bounds (and thus 'clickable') when they have an image
-        final Image icon = this.renderIcon(group, g, camera, element);
-        if (null == icon)
-        {
-            return null;
-        }
-
-        // render image similar to how we handle nodes, but at midpoint between nodes
-        final GraphicEdge edge = (GraphicEdge) element;
-        final ElementContext node0 = camera.getElement(edge.getNode0().getId());
-        final ElementContext node1 = camera.getElement(edge.getNode1().getId());
-        if (null == node0 || null == node1)
-        {
-            return null;
-        }
-        final Point2D pos0 = node0.getPosition();
-        final Point2D pos1 = node1.getPosition();
-        final Point2D midpoint = new Point2D((pos0.getX() + pos1.getX()) / 2d, (pos0.getY() + pos1.getY()) / 2d);
-        return this.nodeRenderer.computeElement(group, g, camera, element, midpoint);
+        // no context, no ability to click on edge for now
+        return null;
     }
 
 
@@ -189,7 +170,14 @@ public class EdgeRenderer extends ElementRenderer
 
         // render icon at midpoint
         final Point2D midpoint = new Point2D((pos0.getX() + pos1.getX()) / 2d, (pos0.getY() + pos1.getY()) / 2d);
-        this.nodeRenderer.renderElement(group, g, camera, element, midpoint);
+        if (edgeGroup != null)
+        {
+            this.renderIcon(group, g, camera, midpoint, edgeGroup.getEdges());
+        }
+        else
+        {
+            this.renderIcon(group, g, camera, midpoint, Arrays.asList(edge));
+        }
 
         // render text
         this.renderText(group, g, camera, element);
@@ -206,17 +194,119 @@ public class EdgeRenderer extends ElementRenderer
     }
 
 
-    private void configurePadding(final StyleGroup group)
+    private Rectangle2D renderIcon(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final Point2D midpoint, final Collection<GraphicEdge> edges)
     {
-        Values value = group.getPadding();
-        if (null == value)
+        if (null == edges || edges.isEmpty())
         {
-            this.padding = 0d;
+            return null;
+        }
+
+        // find all unique icons
+        final Map<String, Image> icons = new TreeMap<>();
+        int num = 0;
+        for (final GraphicEdge edge : edges)
+        {
+            final String iconName;
+            if ("dyn-icon".equalsIgnoreCase(group.getIcon()) || "dynamic".equalsIgnoreCase(group.getIcon()))
+            {
+                iconName = edge.getAttribute("ui.icon");
+            }
+            else
+            {
+                iconName = group.getIcon();
+            }
+
+            if (iconName != null)
+            {
+                final Image icon = this.renderIcon(group, g, camera, edge, this.getWidth(), this.getHeight());
+                if (icon != null)
+                {
+                    icons.put(UUID.randomUUID().toString(), icon);
+                    num++;
+                }
+                if (num >= 15)
+                {
+                    icons.put("zzzzzzz", IconManager.getInstance().get("right-arrow-next", (int) this.getWidth(), (int) this.getHeight()));
+                    break;
+                }
+            }
+        }
+        if (icons.isEmpty())
+        {
+            return null;
+        }
+
+        // compute overall size
+        final int numIcons = icons.size();
+        final double sqrt = Math.sqrt(numIcons);
+        int columns = (int) Math.floor(sqrt + 0.0001d);
+        int rows = columns;
+        if (numIcons < 4)
+        {
+            columns = numIcons;
+            rows = 1;
+        }
+        else if (columns <= 0)
+        {
+            columns = numIcons;
         }
         else
         {
-            this.padding = value.get(0);
+            final int leftoverItems = numIcons - (columns * columns);
+            if (leftoverItems > 0)
+            {
+                rows += leftoverItems / columns;
+                if (leftoverItems % columns != 0)
+                {
+                    rows++;
+                }
+            }
         }
+        final double width = (columns * this.getWidth()) + ((columns + 1) * this.getPaddingX());
+        final double height = (rows * this.getHeight()) + ((rows + 1) * this.getPaddingY());
+
+        // set translate transform
+        final Affine transform = new Affine();
+        transform.appendTranslation(midpoint.getX(), midpoint.getY());
+        g.setTransform(transform);
+
+        // render shape
+        if (!StyleConstants.FillMode.NONE.equals(group.getFillMode()))
+        {
+            g.fillRoundRect(-width / 2d, -height / 2d, width, height, 4, 4);
+        }
+        if (!StyleConstants.StrokeMode.NONE.equals(group.getStrokeMode()))
+        {
+            g.strokeRoundRect(-width / 2d, -height / 2d, width, height, 4, 4);
+        }
+
+        // render all icons
+        g.setTransform(new Affine());
+        final Rectangle2D bounds = new Rectangle2D(midpoint.getX() - (width / 2d), midpoint.getY() - (height / 2d), width, height);
+        double x = this.getPaddingX() + bounds.getMinX();
+        double y = this.getPaddingY() + bounds.getMinY();
+        int row = 0;
+        int col = 0;
+        for (final Image icon : icons.values())
+        {
+            if (icon != null)
+            {
+                g.drawImage(icon, x, y);
+            }
+            col++;
+            if (rows > 1 && col >= columns)
+            {
+                col = 0;
+                row++;
+                x = this.getPaddingX() + bounds.getMinX();
+                y += this.getHeight() + this.getPaddingY();
+            }
+            else
+            {
+                x += this.getWidth() + this.getPaddingX();
+            }
+        }
+        return bounds;
     }
 
 
@@ -255,7 +345,7 @@ public class EdgeRenderer extends ElementRenderer
         Affine transform = new Affine();
         double deltax = pos1.getX() - pos0.getX();
         double deltay = pos1.getY() - pos0.getY();
-        transform.appendTranslation(arrowCenter.getX(), arrowCenter.getY() + this.padding);
+        transform.appendTranslation(arrowCenter.getX(), arrowCenter.getY() + this.getPadding());
         if (Approximations.approximatelyEquals(deltay, 0d, 0.00001d))
         {
             transform.appendRotation(deltax > 0 ? 90d : 270d);

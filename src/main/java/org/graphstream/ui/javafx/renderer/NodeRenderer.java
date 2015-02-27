@@ -40,68 +40,35 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
-import org.graphstream.ui.graphicGraph.stylesheet.Value;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
 
 public class NodeRenderer extends ElementRenderer
 {
-    private double width = 0d;
-
-    private double height = 0d;
-
-    private double paddingX = 0d;
-
-    private double paddingY = 0d;
-
-
-    @Override
-    protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
-    {
-        super.pushDynStyle(group, g, camera, element);
-        this.configureSize(group, g, camera, element);
-    }
-
-
-    @Override
-    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
-    {
-        this.configureSize(group, g, camera, null);
-        this.pushFillStyle(group, g);
-        this.pushStrokeStyle(group, g);
-    }
-
-
     @Override
     protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
     {
         final GraphicNode node = (GraphicNode) element;
         final Point2D pos = camera.graphToScreen(new Point2D(node.x, node.y));
-        return this.computeElement(group, g, camera, element, pos);
-    }
-
-
-    protected ElementContext computeElement(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element, final Point2D pos)
-    {
-        this.configureSize(group, g, camera, element);
         if (null == pos)
         {
             return null;
         }
 
+        final double halfWidth = this.getWidth() / 2d;
+        final double halfHeight = this.getHeight() / 2d;
+
         switch (group.getShape())
         {
             case BOX:
             case ROUNDED_BOX:
-                final double minx = pos.getX() - (this.width / 2d) - this.paddingX;
-                final double miny = pos.getY() - (this.height / 2d) - this.paddingX;
-                return new SquareContext(element, pos, new Rectangle2D(minx, miny, this.width + this.paddingX * 2d, this.height + this.paddingY * 2));
+                final double minx = pos.getX() - halfWidth - this.getPaddingX();
+                final double miny = pos.getY() - halfHeight - this.getPaddingY();
+                return new SquareContext(element, pos, new Rectangle2D(minx, miny, this.getWidth() + this.getPaddingX() * 2d, this.getHeight() + this.getPaddingY() * 2));
             case CIRCLE:
             default:
                 final double sqrt2 = Math.sqrt(2);
-                final double radiusx = (this.width * sqrt2 / 2d) + this.paddingX;
-                final double radiusy = (this.height * sqrt2 / 2d) + this.paddingY;
+                final double radiusx = halfWidth * sqrt2 + this.getPaddingX();
+                final double radiusy = halfHeight * sqrt2 + this.getPaddingY();
                 return new CircleContext(element, pos, radiusx, radiusy);
         }
     }
@@ -187,81 +154,12 @@ public class NodeRenderer extends ElementRenderer
 
         g.setTransform(new Affine());
 
-        final Image icon = this.renderIcon(group, g, camera, element, this.width, this.height);
+        final Image icon = this.renderIcon(group, g, camera, element, this.getWidth(), this.getHeight());
         if (icon != null)
         {
             final double iconX = pos.getX() - (icon.getWidth() / 2d);
             final double iconY = pos.getY() - (icon.getHeight() / 2d);
             g.drawImage(icon, iconX, iconY);
-        }
-    }
-
-
-    private void configureSize(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
-    {
-        if (SizeMode.DYN_SIZE.equals(group.getSizeMode()))
-        {
-            final Object s = element != null ? element.getAttribute("ui.size") : null;
-            if (s != null)
-            {
-                final Value length = StyleConstants.convertValue(s);
-                this.width = length != null ? length.doubleValue() : 0d;
-                this.height = length != null ? length.doubleValue() : 0d;
-            }
-            else
-            {
-                this.width = group.getSize().get(0);
-                this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
-            }
-        }
-        else
-        {
-            this.width = group.getSize().get(0);
-            this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
-        }
-
-        if (SizeMode.FIT.equals(group.getSizeMode()))
-        {
-            final Image icon = this.renderIcon(group, g, camera, element);
-            if (icon != null)
-            {
-                this.width = Math.max(this.width, icon.getWidth());
-                this.height = Math.max(this.height, icon.getHeight());
-            }
-        }
-
-        if (this.isAutoScale())
-        {
-            if (camera.getViewPercent() <= 1)
-            {
-                final double maxWidth = this.width * 1.5d;
-                final double maxHeight = this.height * 1.5d;
-                final double scaledWidth = this.width + (1d - camera.getViewPercent()) * this.width;
-                final double scaledHeight = this.height + (1d - camera.getViewPercent()) * this.height;
-                this.width = (int) Math.round(Math.min(maxWidth, scaledWidth));
-                this.height = (int) Math.round(Math.min(maxHeight, scaledHeight));
-            }
-            else
-            {
-                final double minWidth = this.width * 0.5d;
-                final double minHeight = this.height * 0.5d;
-                final double scaledWidth = this.width - (camera.getViewPercent() - 1d) * this.width;
-                final double scaledHeight = this.height - (camera.getViewPercent() - 1d) * this.height;
-                this.width = (int) Math.round(Math.max(minWidth, scaledWidth));
-                this.height = (int) Math.round(Math.max(minHeight, scaledHeight));
-            }
-        }
-
-        final Values padding = group.getPadding();
-        if (padding != null && padding.getValueCount() > 0)
-        {
-            this.paddingX = padding.get(0);
-            this.paddingY = padding.getValueCount() > 1 ? padding.get(1) : this.paddingX;
-        }
-        else
-        {
-            this.paddingX = 0d;
-            this.paddingY = 0d;
         }
     }
 }

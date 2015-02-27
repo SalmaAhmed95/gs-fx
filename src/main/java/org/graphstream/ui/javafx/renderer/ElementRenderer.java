@@ -67,10 +67,48 @@ public abstract class ElementRenderer
 
     private int textSize;
 
+    private double width = 0d;
+
+    private double height = 0d;
+
+    private double paddingX = 0d;
+
+    private double paddingY = 0d;
+
 
     public ElementRenderer()
     {
 
+    }
+
+
+    public double getWidth()
+    {
+        return this.width;
+    }
+
+
+    public double getHeight()
+    {
+        return this.height;
+    }
+
+
+    public double getPadding()
+    {
+        return Math.max(this.paddingX, this.paddingY);
+    }
+
+
+    public double getPaddingX()
+    {
+        return this.paddingX;
+    }
+
+
+    public double getPaddingY()
+    {
+        return this.paddingY;
     }
 
 
@@ -174,9 +212,6 @@ public abstract class ElementRenderer
     }
 
 
-    protected abstract void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera);
-
-
     protected abstract ElementContext computeElement(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element);
 
 
@@ -194,6 +229,14 @@ public abstract class ElementRenderer
     }
 
 
+    protected void pushStyle(StyleGroup group, GraphicsContext g, FxCamera camera)
+    {
+        this.configureSize(group, g, camera, null);
+        this.pushFillStyle(group, g);
+        this.pushStrokeStyle(group, g);
+    }
+
+
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
         Color fill = SwingUtils.fromAwt(group.getFillColor(0));
@@ -206,6 +249,8 @@ public abstract class ElementRenderer
             fill = Color.BLACK;
         }
         g.setFill(fill);
+
+        this.configureSize(group, g, camera, element);
     }
 
 
@@ -551,6 +596,75 @@ public abstract class ElementRenderer
         else
         {
             return SwingUtils.fromAwt(group.getFillColor(0));
+        }
+    }
+
+
+    private void configureSize(final StyleGroup group, final GraphicsContext g, final FxCamera camera, final GraphicElement element)
+    {
+        if (StyleConstants.SizeMode.DYN_SIZE.equals(group.getSizeMode()))
+        {
+            final Object s = element != null ? element.getAttribute("ui.size") : null;
+            if (s != null)
+            {
+                final Value length = StyleConstants.convertValue(s);
+                this.width = length != null ? length.doubleValue() : 0d;
+                this.height = length != null ? length.doubleValue() : 0d;
+            }
+            else
+            {
+                this.width = group.getSize().get(0);
+                this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
+            }
+        }
+        else
+        {
+            this.width = group.getSize().get(0);
+            this.height = group.getSize().size() > 1 ? group.getSize().get(1) : this.width;
+        }
+
+        if (StyleConstants.SizeMode.FIT.equals(group.getSizeMode()))
+        {
+            final Image icon = this.renderIcon(group, g, camera, element);
+            if (icon != null)
+            {
+                this.width = Math.max(this.width, icon.getWidth());
+                this.height = Math.max(this.height, icon.getHeight());
+            }
+        }
+
+        if (this.isAutoScale())
+        {
+            if (camera.getViewPercent() <= 1)
+            {
+                final double maxWidth = this.width * 1.5d;
+                final double maxHeight = this.height * 1.5d;
+                final double scaledWidth = this.width + (1d - camera.getViewPercent()) * this.width;
+                final double scaledHeight = this.height + (1d - camera.getViewPercent()) * this.height;
+                this.width = (int) Math.round(Math.min(maxWidth, scaledWidth));
+                this.height = (int) Math.round(Math.min(maxHeight, scaledHeight));
+            }
+            else
+            {
+                final double minWidth = this.width * 0.5d;
+                final double minHeight = this.height * 0.5d;
+                final double scaledWidth = this.width - (camera.getViewPercent() - 1d) * this.width;
+                final double scaledHeight = this.height - (camera.getViewPercent() - 1d) * this.height;
+                this.width = (int) Math.round(Math.max(minWidth, scaledWidth));
+                this.height = (int) Math.round(Math.max(minHeight, scaledHeight));
+            }
+        }
+
+        final Values padding = group.getPadding();
+        if (padding != null && padding.getValueCount() > 0)
+        {
+            this.paddingX = padding.get(0);
+            this.paddingY = padding.getValueCount() > 1 ? padding.get(1) : this.paddingX;
+        }
+        else
+        {
+            this.paddingX = 0d;
+            this.paddingY = 0d;
         }
     }
 }
