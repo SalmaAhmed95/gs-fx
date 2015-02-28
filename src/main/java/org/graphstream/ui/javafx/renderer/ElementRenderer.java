@@ -82,43 +82,43 @@ public abstract class ElementRenderer
     }
 
 
-    public double getWidth()
+    public final double getWidth()
     {
         return this.width;
     }
 
 
-    public double getHeight()
+    public final double getHeight()
     {
         return this.height;
     }
 
 
-    public double getPadding()
+    public final double getPadding()
     {
         return Math.max(this.paddingX, this.paddingY);
     }
 
 
-    public double getPaddingX()
+    public final double getPaddingX()
     {
         return this.paddingX;
     }
 
 
-    public double getPaddingY()
+    public final double getPaddingY()
     {
         return this.paddingY;
     }
 
 
-    public boolean isAutoScale()
+    public final boolean isAutoScale()
     {
         return this.autoScale;
     }
 
 
-    public void setAutoScale(final boolean autoScale)
+    public final void setAutoScale(final boolean autoScale)
     {
         this.autoScale = autoScale;
     }
@@ -239,6 +239,8 @@ public abstract class ElementRenderer
 
     protected void pushDynStyle(StyleGroup group, GraphicsContext g, FxCamera camera, GraphicElement element)
     {
+        this.configureSize(group, g, camera, element);
+
         Color fill = SwingUtils.fromAwt(group.getFillColor(0));
         if (element != null && StyleConstants.FillMode.DYN_PLAIN.equals(group.getFillMode()))
         {
@@ -248,9 +250,10 @@ public abstract class ElementRenderer
         {
             fill = Color.BLACK;
         }
-        g.setFill(fill);
-
-        this.configureSize(group, g, camera, element);
+        if (fill != null)
+        {
+            g.setFill(fill);
+        }
     }
 
 
