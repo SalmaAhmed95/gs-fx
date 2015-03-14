@@ -31,12 +31,6 @@
  */
 package org.graphstream.ui.javafx.renderer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.transform.Affine;
@@ -60,6 +54,13 @@ import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.util.CubicCurve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Define how the graph is viewed.
@@ -438,7 +439,7 @@ public class FxCamera implements Camera
 
         this.zoom = 1;
         this.center.set(tx, ty, 0);
-        if (!Approximations.approximatelyEquals(0, scale, .000001))
+        if (scale > 0 && !Approximations.approximatelyEquals(0, scale, .000001))
         {
             this.metrics.setRatioPx2Gu(scale);
         }

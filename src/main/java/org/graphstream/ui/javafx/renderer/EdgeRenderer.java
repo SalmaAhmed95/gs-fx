@@ -54,7 +54,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.UUID;
 
 public class EdgeRenderer extends ElementRenderer
 {
@@ -216,17 +215,17 @@ public class EdgeRenderer extends ElementRenderer
                 iconName = group.getIcon();
             }
 
-            if (iconName != null)
+            if (iconName != null && !icons.containsKey(iconName))
             {
                 final Image icon = this.renderIcon(group, g, camera, edge, this.getWidth(), this.getHeight());
                 if (icon != null)
                 {
-                    icons.put(UUID.randomUUID().toString(), icon);
+                    icons.put(iconName, icon);
                     num++;
                 }
-                if (num >= 15)
+                if (num >= 8)
                 {
-                    icons.put("zzzzzzz", IconManager.getInstance().get("right-arrow-next", (int) this.getWidth(), (int) this.getHeight()));
+                    icons.put("zzzzzzz", IconManager.getInstance().get("arrow-right-white", (int) this.getWidth(), (int) this.getHeight()));
                     break;
                 }
             }

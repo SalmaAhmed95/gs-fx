@@ -107,7 +107,7 @@ public class IconManager
         final String scaledId;
         if (width > 0 && height > 0)
         {
-            scaledId = name + "_" + width + "x" + height;
+            scaledId = name + "#" + width + "x" + height;
         }
         else
         {
@@ -150,7 +150,9 @@ public class IconManager
             try (final InputStream input = iconPath.openStream())
             {
                 final Image image = new Image(input);
-                final ImageContext context = new ImageContext(iconPath, (int) Math.round(image.getWidth()), (int) Math.round(image.getWidth()));
+                final int w = (int) Math.round(image.getWidth());
+                final int h = (int) Math.round(image.getWidth());
+                final ImageContext context = new ImageContext(iconPath, w, h);
                 return this.icons.add(context);
             }
             catch (final Exception e)
@@ -254,7 +256,7 @@ public class IconManager
         {
             try (final InputStream input = this.url.openStream())
             {
-                return new Image(input, w, h, false, true);
+                return new Image(input, w, h, true, true);
             }
             catch (final Exception e)
             {
