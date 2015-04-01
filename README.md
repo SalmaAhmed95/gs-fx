@@ -1,7 +1,7 @@
 gs-fx
 =====
 
-JavaFX user interface for GraphStream.
+JavaFX user interface for GraphStream.  Requires the forked version of graphstream/gs-core at trajar/gs-fx.
 
 Examples can be found in the src/test/java folder.  A quick JavaFX view can be setup as simple as: 
 
